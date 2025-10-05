@@ -189,10 +189,37 @@ export const readStockSheets = async (filename: string): Promise<StockSheet[]> =
 };
 
 /**
+ * Map Excel row to Order interface
+ * Converts Excel column names to Order interface field names
+ */
+const mapExcelRowToOrder = (row: any): Order => {
+  return {
+    id: row['Order Ref'] || row.id || '',
+    orderRef: row['Order Ref'] || row.orderRef || '',
+    date: row['Date'] || row.date || '',
+    customerId: row['Customer ID'] || row.customerId || '',
+    customerName: row['Customer'] || row.customerName,
+    sheetId: row['Sheet ID'] || row.sheetId,
+    material: row['Material'] || row.material || '',
+    pieceSize: row['Piece Size (mm)'] || row.pieceSize || '',
+    qty: row['Qty'] || row.qty || 0,
+    areaPerPiece: row['Area per Piece (m²)'] || row.areaPerPiece,
+    totalAreaUsed: row['Total Area Used (m²)'] || row.totalAreaUsed,
+    unitCost: row['Unit Cost'] || row.unitCost,
+    unitSalePrice: row['Unit Sale Price'] || row.unitSalePrice,
+    totalCost: row['Total Cost'] || row.totalCost,
+    totalSale: row['Total Sale'] || row.totalSale,
+    profit: row['Profit'] || row.profit,
+    notes: row['Notes'] || row.notes
+  };
+};
+
+/**
  * Read orders from Excel file
  */
 export const readOrders = async (filename: string): Promise<Order[]> => {
-  return readExcelSheet<Order>(filename, 'Orders');
+  const rawData = await readExcelSheet<any>(filename, 'Orders');
+  return rawData.map(mapExcelRowToOrder);
 };
 
 /**
