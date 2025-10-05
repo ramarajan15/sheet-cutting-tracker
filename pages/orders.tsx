@@ -227,21 +227,21 @@ export default function Orders() {
           <p className="text-2xl font-bold text-blue-600">{filteredOrders.length}</p>
         </div>
         <div className="bg-white rounded-lg shadow-md p-4">
-          <h3 className="text-gray-600 text-sm font-medium">Total Revenue</h3>
+          <h3 className="text-gray-600 text-sm font-medium">Total Revenue (₹)</h3>
           <p className="text-2xl font-bold text-green-600">
-            ${filteredOrders.reduce((sum, row) => sum + (row.totalSale || 0), 0).toFixed(2)}
+            ₹{filteredOrders.reduce((sum, row) => sum + (row.totalSale || 0), 0).toFixed(2)}
           </p>
         </div>
         <div className="bg-white rounded-lg shadow-md p-4">
-          <h3 className="text-gray-600 text-sm font-medium">Total Cost</h3>
+          <h3 className="text-gray-600 text-sm font-medium">Total Cost (₹)</h3>
           <p className="text-2xl font-bold text-orange-600">
-            ${filteredOrders.reduce((sum, row) => sum + (row.totalCost || 0), 0).toFixed(2)}
+            ₹{filteredOrders.reduce((sum, row) => sum + (row.totalCost || 0), 0).toFixed(2)}
           </p>
         </div>
         <div className="bg-white rounded-lg shadow-md p-4">
-          <h3 className="text-gray-600 text-sm font-medium">Total Profit</h3>
+          <h3 className="text-gray-600 text-sm font-medium">Total Profit (₹)</h3>
           <p className="text-2xl font-bold text-purple-600">
-            ${filteredOrders.reduce((sum, row) => sum + (row.profit || 0), 0).toFixed(2)}
+            ₹{filteredOrders.reduce((sum, row) => sum + (row.profit || 0), 0).toFixed(2)}
           </p>
         </div>
       </div>
@@ -257,11 +257,11 @@ export default function Orders() {
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Customer</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Material</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Size</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Size (mm)</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Qty</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total Cost</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total Sale</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Profit</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total Cost (₹)</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total Sale (₹)</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Profit (₹)</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
               </tr>
             </thead>
@@ -277,9 +277,9 @@ export default function Orders() {
                   <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">{order.material}</td>
                   <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">{order.pieceSize}</td>
                   <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">{order.qty}</td>
-                  <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">${(order.totalCost || 0).toFixed(2)}</td>
-                  <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">${(order.totalSale || 0).toFixed(2)}</td>
-                  <td className="px-4 py-4 whitespace-nowrap text-sm text-green-600 font-medium">${(order.profit || 0).toFixed(2)}</td>
+                  <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">₹{(order.totalCost || 0).toFixed(2)}</td>
+                  <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">₹{(order.totalSale || 0).toFixed(2)}</td>
+                  <td className="px-4 py-4 whitespace-nowrap text-sm text-green-600 font-medium">₹{(order.profit || 0).toFixed(2)}</td>
                   <td className="px-4 py-4 whitespace-nowrap text-sm">
                     <div className="flex gap-2">
                       <button
@@ -379,13 +379,13 @@ export default function Orders() {
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Piece Size</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Piece Size (mm)</label>
               <input
                 type="text"
                 value={formData.pieceSize}
                 onChange={(e) => setFormData({ ...formData, pieceSize: e.target.value })}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="e.g., 500x300"
+                placeholder="e.g., 500x300 (in mm)"
               />
             </div>
             <div>
@@ -401,7 +401,7 @@ export default function Orders() {
           </div>
           <div className="grid grid-cols-3 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Unit Cost</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Unit Cost (₹)</label>
               <input
                 type="number"
                 value={formData.unitCost}
@@ -409,10 +409,11 @@ export default function Orders() {
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 min="0"
                 step="0.01"
+                placeholder="Enter cost in rupees"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Unit Sale Price</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Unit Sale Price (₹)</label>
               <input
                 type="number"
                 value={formData.unitSalePrice}
@@ -420,10 +421,11 @@ export default function Orders() {
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 min="0"
                 step="0.01"
+                placeholder="Enter price in rupees"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Profit (Auto-calculated)</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Profit (₹) (Auto-calculated)</label>
               <input
                 type="number"
                 value={calculateTotals(formData.qty || 0, formData.unitCost || 0, formData.unitSalePrice || 0).profit}
@@ -516,12 +518,13 @@ export default function Orders() {
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Piece Size</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Piece Size (mm)</label>
               <input
                 type="text"
                 value={formData.pieceSize}
                 onChange={(e) => setFormData({ ...formData, pieceSize: e.target.value })}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="e.g., 500x300 (in mm)"
               />
             </div>
             <div>
@@ -537,7 +540,7 @@ export default function Orders() {
           </div>
           <div className="grid grid-cols-3 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Unit Cost</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Unit Cost (₹)</label>
               <input
                 type="number"
                 value={formData.unitCost}
@@ -545,10 +548,11 @@ export default function Orders() {
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 min="0"
                 step="0.01"
+                placeholder="Enter cost in rupees"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Unit Sale Price</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Unit Sale Price (₹)</label>
               <input
                 type="number"
                 value={formData.unitSalePrice}
@@ -556,10 +560,11 @@ export default function Orders() {
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 min="0"
                 step="0.01"
+                placeholder="Enter price in rupees"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Profit (Auto-calculated)</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Profit (₹) (Auto-calculated)</label>
               <input
                 type="number"
                 value={calculateTotals(formData.qty || 0, formData.unitCost || 0, formData.unitSalePrice || 0).profit}

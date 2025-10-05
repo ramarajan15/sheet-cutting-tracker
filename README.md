@@ -36,6 +36,24 @@ This application uses an Excel file (`SheetCuttingBusinessTemplate.xlsx`) stored
 - **Orders** (enhanced): Orders with customer and sheet traceability
 - **Leftovers**: Leftover pieces linked to parent sheets with factory information
 
+### Units of Measurement
+
+**Important**: This application uses the following standardized units throughout:
+
+- **Dimensions (Length, Width)**: All dimensions are in **millimeters (mm)**
+  - Piece sizes (e.g., "500x300" means 500mm × 300mm)
+  - Sheet sizes (e.g., "2440x1220" means 2440mm × 1220mm)
+  - All dimension inputs and displays are in millimeters
+
+- **Area**: Calculated areas are in **square meters (m²)**
+  - Area per piece, total area used, leftover area
+
+- **Currency**: All prices and costs are in **Indian Rupees (₹)**
+  - Unit cost, unit sale price, total cost, total sale, profit
+  - All monetary values throughout the application
+
+These units are enforced throughout the UI, forms, tables, and Excel integration.
+
 ### Material Traceability
 
 The application provides full end-to-end material traceability:

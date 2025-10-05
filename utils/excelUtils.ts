@@ -1,6 +1,7 @@
 import * as XLSX from 'xlsx';
 
 // Core data interfaces for traceability
+// All dimensions are in millimeters (mm), and all costs/prices are in Indian Rupees (₹)
 export interface Customer {
   id: string;
   name: string;
@@ -27,11 +28,11 @@ export interface Purchase {
   factoryId: string;
   factoryName?: string;
   material: string;
-  size: string; // e.g., "2440x1220"
+  size: string; // Dimensions in millimeters (e.g., "2440x1220")
   thickness?: string;
   qty: number;
-  unitCost: number;
-  totalCost: number;
+  unitCost: number; // Cost in Indian Rupees (₹)
+  totalCost: number; // Cost in Indian Rupees (₹)
   batchRef?: string;
   notes?: string;
 }
@@ -41,7 +42,7 @@ export interface StockSheet {
   purchaseId: string;
   factoryId: string;
   material: string;
-  size: string;
+  size: string; // Dimensions in millimeters
   thickness?: string;
   dateReceived: string;
   batchRef?: string;
@@ -57,15 +58,15 @@ export interface Order {
   customerName?: string;
   sheetId?: string;
   material: string;
-  pieceSize: string;
+  pieceSize: string; // Dimensions in millimeters (e.g., "500x300")
   qty: number;
-  areaPerPiece?: number;
-  totalAreaUsed?: number;
-  unitCost?: number;
-  unitSalePrice?: number;
-  totalCost?: number;
-  totalSale?: number;
-  profit?: number;
+  areaPerPiece?: number; // Area in square meters (m²)
+  totalAreaUsed?: number; // Area in square meters (m²)
+  unitCost?: number; // Cost in Indian Rupees (₹)
+  unitSalePrice?: number; // Price in Indian Rupees (₹)
+  totalCost?: number; // Cost in Indian Rupees (₹)
+  totalSale?: number; // Revenue in Indian Rupees (₹)
+  profit?: number; // Profit in Indian Rupees (₹)
   notes?: string;
 }
 
@@ -75,10 +76,10 @@ export interface Leftover {
   purchaseId?: string;
   factoryId?: string;
   material: string;
-  length: number;
-  width: number;
+  length: number; // Length in millimeters (mm)
+  width: number; // Width in millimeters (mm)
   thickness?: string;
-  area: number;
+  area: number; // Area in square meters (m²)
   dateCreated: string;
   fromOrderRef?: string;
   status: 'available' | 'used';
@@ -86,22 +87,23 @@ export interface Leftover {
 }
 
 // Legacy SheetData interface for backward compatibility
+// All dimensions are in millimeters (mm), areas in m², and costs/prices in Indian Rupees (₹)
 export interface SheetData {
   Material?: string;
   Date?: string;
   Customer?: string;
   'Order Ref'?: string;
   'Sheet Used (Y/N)'?: string;
-  'Piece Size (mm)'?: string;
+  'Piece Size (mm)'?: string;  // Dimensions in millimeters (e.g., "500x300")
   Qty?: number;
-  'Area per Piece (m²)'?: number;
-  'Total Area Used (m²)'?: number;
-  'Unit Cost'?: number;
-  'Unit Sale Price'?: number;
-  'Total Cost'?: number;
-  'Total Sale'?: number;
-  Profit?: number;
-  'Leftover Area (m²)'?: number;
+  'Area per Piece (m²)'?: number;  // Area in square meters
+  'Total Area Used (m²)'?: number;  // Area in square meters
+  'Unit Cost'?: number;  // Cost in Indian Rupees (₹)
+  'Unit Sale Price'?: number;  // Price in Indian Rupees (₹)
+  'Total Cost'?: number;  // Cost in Indian Rupees (₹)
+  'Total Sale'?: number;  // Revenue in Indian Rupees (₹)
+  Profit?: number;  // Profit in Indian Rupees (₹)
+  'Leftover Area (m²)'?: number;  // Area in square meters
   'Offcut Used? (Y/N)'?: string;
   Notes?: string;
   // Extended fields for traceability
