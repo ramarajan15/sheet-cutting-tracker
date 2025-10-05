@@ -44,13 +44,16 @@ Factory → Purchase → Stock Sheet → Order → Customer
 Every material can be traced through the complete supply chain:
 
 1. **Factory to Purchase**: Each purchase record links to a factory via `factoryId`
-2. **Purchase to Stock**: Stock sheets link to purchases via `purchaseId`
-3. **Stock to Order**: Orders link to stock sheets via `sheetId`
-4. **Order to Customer**: Orders link to customers via `customerId`
-5. **Stock to Leftover**: Leftovers link to parent sheets via `parentSheetId`
+2. **Purchase to Product**: Each purchase links to a product via `productId`
+3. **Purchase to Stock**: Stock sheets link to purchases via `purchaseId`
+4. **Stock to Order**: Orders link to stock sheets via `sheetId`
+5. **Order to Product**: Order items link to products via `productId`
+6. **Order to Customer**: Orders link to customers via `customerId`
+7. **Stock to Leftover**: Leftovers link to parent sheets via `parentSheetId`
 
 This enables questions like:
 - "Which factory supplied the material for this customer order?"
+- "What product was used in this order?"
 - "What orders were fulfilled from this batch?"
 - "Which leftovers came from factory X?"
 
@@ -108,7 +111,7 @@ Columns: id, name, email, phone, address, notes
 Columns: id, name, location, contact, email, phone, materials, notes
 
 ### Purchases Sheet
-Columns: id, date, factoryId, factoryName, material, size, thickness, qty, unitCost, totalCost, batchRef, notes
+Columns: id, date, factoryId, factoryName, productId, productName, size, thickness, qty, unitCost, totalCost, batchRef, notes
 
 ## Technology Stack
 

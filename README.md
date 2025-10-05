@@ -47,7 +47,7 @@ This application uses an Excel file (`SheetCuttingBusinessTemplate.xlsx`) stored
 - **Orders**: Order data (legacy format for backward compatibility)
 - **Customers**: Customer profiles and contact information
 - **Factories**: Supplier/factory profiles and materials supplied
-- **Purchases**: Incoming stock purchases with factory, date, material, size, qty, cost, and batch reference
+- **Purchases**: Incoming stock purchases with factory, date, product, size, qty, cost, and batch reference
 - **Categories**: Product categories for organization and filtering
 - **Products**: Product catalog with specifications (ID, Name, Category, Size L×W×T mm, Area mm², Unit Cost ₹/mm², Colour, Weight g)
 - **Stock**: Stock sheet inventory with purchase and factory links
@@ -74,13 +74,14 @@ These units are enforced throughout the UI, forms, tables, and Excel integration
 
 ### Material Traceability
 
-The application provides full end-to-end material traceability:
+The application provides full end-to-end product traceability:
 
 1. **Purchase → Factory**: Each purchase is linked to a source factory
-2. **Stock Sheet → Purchase**: Each stock sheet is linked to a purchase (and thus to a factory)
-3. **Order → Stock Sheet**: Each order is linked to the sheet(s) used
-4. **Leftover → Parent Sheet**: Each leftover piece is linked to its parent sheet
-5. **Complete Chain**: You can trace any order back to the original factory and purchase batch
+2. **Purchase → Product**: Each purchase references a product from the Products master data
+3. **Stock Sheet → Purchase**: Each stock sheet is linked to a purchase (and thus to a factory and product)
+4. **Order → Product**: Each order item references a product from the Products master data
+5. **Leftover → Parent Sheet**: Each leftover piece is linked to its parent sheet
+6. **Complete Chain**: You can trace any order back to the original factory and purchase batch
 
 ## Getting Started
 
@@ -231,20 +232,23 @@ Navigate to `/factories` to manage your supplier/factory information:
 Navigate to `/purchases` to manage incoming stock purchases:
 
 1. **Add New Purchase**: Click the "Add New Purchase" button
-   - Required fields: Purchase ID, Factory, and Material
-   - Optional fields: Date, Size, Thickness, Quantity, Unit Cost, Batch Reference, and Notes
+   - Required fields: Purchase ID, Factory, and Product
+   - **Product Selection**: Choose a product from the dropdown - dimensions and cost are automatically filled from the product master data
+   - Optional fields: Date, Quantity, Batch Reference, and Notes
+   - Size, Thickness, and Unit Cost are auto-filled from the selected product and are read-only
    - Total Cost is automatically calculated from Quantity × Unit Cost
    - Click "Add Purchase" to save
 
 2. **Edit Purchase**: Click "Edit" next to any purchase in the table
    - Modify any fields (ID is locked)
+   - Change the product selection to auto-update dimensions and cost
    - Total Cost updates automatically
    - Click "Save Changes" to update
 
 3. **Delete Purchase**: Click "Delete" next to any purchase
    - Confirm deletion in the popup modal
 
-4. **Filter and Export**: Use the filter dropdowns to narrow down purchases by factory or material, then export to Excel
+4. **Filter and Export**: Use the filter dropdowns to narrow down purchases by factory or product, then export to Excel
 
 ### Managing Customers
 
@@ -333,8 +337,9 @@ Navigate to `/orders` to manage customer orders with multi-item support:
    - Required fields: Order ID, Order Ref, and Customer
    - **Multi-Item Support**: Each order can contain multiple line items
      - Click "+ Add Item" to add additional line items
-     - Each line item requires: Material, Length (mm), Width (mm), and Quantity
-     - Optional per item: Unit Cost (₹) and Unit Sale Price (₹)
+     - Each line item requires: Product (selected from dropdown) and Quantity
+     - **Auto-fill from Product**: When you select a product, Length, Width, and Unit Cost are automatically filled from the product master data and become read-only
+     - Optional per item: Unit Sale Price (₹)
      - Click "Remove" to delete a line item (minimum 1 item required)
    - **Automatic Calculations**:
      - Item totals (cost, sale, profit) are calculated automatically for each line item
@@ -346,7 +351,7 @@ Navigate to `/orders` to manage customer orders with multi-item support:
    - Orders display with total values and item count badge
    - Click the expand button (▶) next to an order to view line items
    - Expanded view shows detailed breakdown of each line item with:
-     - Material type
+     - Product name
      - Dimensions (length × width in mm)
      - Quantity
      - Unit cost and sale price
@@ -355,6 +360,7 @@ Navigate to `/orders` to manage customer orders with multi-item support:
 3. **Edit Order**: Click "Edit" next to any order in the table
    - Modify order details and line items
    - Add or remove line items as needed
+   - Select different products to auto-update dimensions and cost
    - All totals update automatically
    - Click "Save Changes" to update
 
@@ -362,8 +368,8 @@ Navigate to `/orders` to manage customer orders with multi-item support:
    - Confirm deletion in the popup modal
    - This will delete the order and all its line items
 
-5. **Filter Orders**: Use the material filter dropdown to narrow down orders
-   - Filters orders containing items with the selected material
+5. **Filter Orders**: Use the product filter dropdown to narrow down orders
+   - Filters orders containing items with the selected product
    - Summary cards update automatically to reflect filtered data
 
 6. **Export Data**: Click "Export to Excel" to download current order and customer data
@@ -408,13 +414,13 @@ The application uses TypeScript interfaces to define the data structure:
 
 - `Customer`: Customer profiles (id, name, email, phone, address, notes)
 - `Factory`: Supplier/factory profiles (id, name, location, contact, materials)
-- `Purchase`: Purchase records (id, date, factoryId, material, size, qty, cost, batchRef)
-- `StockSheet`: Stock inventory (id, purchaseId, factoryId, material, size, status)
+- `Purchase`: Purchase records (id, date, factoryId, productId, productName, size, qty, cost, batchRef)
+- `StockSheet`: Stock inventory (id, purchaseId, factoryId, productId, productName, size, status)
 - `Order`: Order records with multi-item support:
   - Order-level: id, orderRef, date, customerId, items[], totalCost, totalSale, profit, notes
-  - Each item (OrderItem): id, material, length, width, qty, unitCost, unitSalePrice, totalCost, totalSale, profit, notes
+  - Each item (OrderItem): id, productId, productName, length, width, qty, unitCost, unitSalePrice, totalCost, totalSale, profit, notes
   - Legacy fields maintained for backward compatibility
-- `Leftover`: Leftover pieces (id, parentSheetId, purchaseId, factoryId, material, dimensions, area)
+- `Leftover`: Leftover pieces (id, parentSheetId, purchaseId, factoryId, productId, productName, dimensions, area)
 
 **Multi-Item Orders**: Orders now support multiple line items, allowing a single customer order to include different materials, sizes, and quantities. The system automatically calculates totals at both item and order levels. Legacy single-item orders are automatically migrated to the new structure.
 
