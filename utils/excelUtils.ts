@@ -48,11 +48,13 @@ export interface Purchase {
   date: string;
   factoryId: string;
   factoryName?: string;
-  material: string;
-  size: string; // Dimensions in millimeters (e.g., "2440x1220")
+  productId?: string; // New: Reference to Product
+  productName?: string; // New: Product name for display
+  material?: string; // Legacy: kept for backward compatibility
+  size?: string; // Dimensions in millimeters (e.g., "2440x1220"), auto-filled from product
   thickness?: string;
   qty: number;
-  unitCost: number; // Cost in Indian Rupees (₹)
+  unitCost?: number; // Cost in Indian Rupees (₹), can be auto-filled from product
   totalCost: number; // Cost in Indian Rupees (₹)
   batchRef?: string;
   notes?: string;
@@ -62,8 +64,10 @@ export interface StockSheet {
   id: string;
   purchaseId: string;
   factoryId: string;
-  material: string;
-  size: string; // Dimensions in millimeters
+  productId?: string; // New: Reference to Product
+  productName?: string; // New: Product name for display
+  material?: string; // Legacy: kept for backward compatibility
+  size?: string; // Dimensions in millimeters, auto-filled from product
   thickness?: string;
   dateReceived: string;
   batchRef?: string;
@@ -73,11 +77,13 @@ export interface StockSheet {
 
 export interface OrderItem {
   id: string; // Unique identifier for the line item
-  material: string; // Material type (e.g., "Aluminium Sheet", "Stainless Steel")
-  length: number; // Length in millimeters (mm)
-  width: number; // Width in millimeters (mm)
+  productId?: string; // New: Reference to Product
+  productName?: string; // New: Product name for display
+  material?: string; // Legacy: kept for backward compatibility
+  length: number; // Length in millimeters (mm), auto-filled from product
+  width: number; // Width in millimeters (mm), auto-filled from product
   qty: number; // Quantity of pieces
-  unitCost?: number; // Cost per unit in Indian Rupees (₹)
+  unitCost?: number; // Cost per unit in Indian Rupees (₹), auto-filled from product
   unitSalePrice?: number; // Sale price per unit in Indian Rupees (₹)
   totalCost?: number; // Total cost for this line item (₹)
   totalSale?: number; // Total sale for this line item (₹)
@@ -113,7 +119,9 @@ export interface Leftover {
   parentSheetId: string;
   purchaseId?: string;
   factoryId?: string;
-  material: string;
+  productId?: string; // New: Reference to Product
+  productName?: string; // New: Product name for display
+  material?: string; // Legacy: kept for backward compatibility
   length: number; // Length in millimeters (mm)
   width: number; // Width in millimeters (mm)
   thickness?: string;
