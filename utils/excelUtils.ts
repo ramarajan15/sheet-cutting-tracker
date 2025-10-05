@@ -48,7 +48,8 @@ export interface Purchase {
   date: string;
   factoryId: string;
   factoryName?: string;
-  material: string;
+  productId: string;
+  productName?: string;
   size: string; // Dimensions in millimeters (e.g., "2440x1220")
   thickness?: string;
   qty: number;
@@ -62,7 +63,8 @@ export interface StockSheet {
   id: string;
   purchaseId: string;
   factoryId: string;
-  material: string;
+  productId: string;
+  productName?: string;
   size: string; // Dimensions in millimeters
   thickness?: string;
   dateReceived: string;
@@ -73,7 +75,8 @@ export interface StockSheet {
 
 export interface OrderItem {
   id: string; // Unique identifier for the line item
-  material: string; // Material type (e.g., "Aluminium Sheet", "Stainless Steel")
+  productId: string; // Product ID reference from Products master data
+  productName?: string; // Product name (e.g., "Aluminium Sheet", "Stainless Steel")
   length: number; // Length in millimeters (mm)
   width: number; // Width in millimeters (mm)
   qty: number; // Quantity of pieces
@@ -113,7 +116,8 @@ export interface Leftover {
   parentSheetId: string;
   purchaseId?: string;
   factoryId?: string;
-  material: string;
+  productId: string;
+  productName?: string;
   length: number; // Length in millimeters (mm)
   width: number; // Width in millimeters (mm)
   thickness?: string;
@@ -264,6 +268,8 @@ const mapExcelRowToOrder = (row: any): Order => {
   
   // Legacy single-item format - convert to multi-item structure
   const material = row['Material'] || row.material || '';
+  const productId = row['Product ID'] || row.productId || material; // Use material as fallback for backward compatibility
+  const productName = row['Product'] || row.productName || material; // Use material as fallback
   const pieceSize = row['Piece Size (mm)'] || row.pieceSize || '';
   const qty = row['Qty'] || row.qty || 0;
   const unitCost = row['Unit Cost'] || row.unitCost || 0;
@@ -285,9 +291,10 @@ const mapExcelRowToOrder = (row: any): Order => {
   const profit = totalSale - totalCost;
   
   // Create a single item for legacy orders
-  const items: OrderItem[] = material ? [{
+  const items: OrderItem[] = productId ? [{
     id: `${row['Order Ref'] || row.id || ''}-item-1`,
-    material,
+    productId,
+    productName,
     length,
     width,
     qty,
@@ -311,7 +318,7 @@ const mapExcelRowToOrder = (row: any): Order => {
     notes: row['Notes'] || row.notes,
     // Keep legacy fields for backward compatibility
     sheetId: row['Sheet ID'] || row.sheetId,
-    material,
+    material: productName || material, // Keep material for legacy support
     pieceSize,
     qty,
     areaPerPiece: row['Area per Piece (m²)'] || row.areaPerPiece,
@@ -506,7 +513,8 @@ export const exportToExcel = (
               'Customer': order.customerName,
               'Item ID': item.id,
               'Item #': index + 1,
-              'Material': item.material,
+              'Product ID': item.productId,
+              'Product': item.productName,
               'Length (mm)': item.length,
               'Width (mm)': item.width,
               'Dimensions': `${item.length}x${item.width}`,
