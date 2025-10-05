@@ -401,7 +401,7 @@ export default function Orders() {
           </div>
           <div className="grid grid-cols-3 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Unit Cost</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Unit Cost (₹)</label>
               <input
                 type="number"
                 value={formData.unitCost}
@@ -409,10 +409,11 @@ export default function Orders() {
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 min="0"
                 step="0.01"
+                placeholder="Enter cost in rupees"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Unit Sale Price</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Unit Sale Price (₹)</label>
               <input
                 type="number"
                 value={formData.unitSalePrice}
@@ -420,10 +421,11 @@ export default function Orders() {
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 min="0"
                 step="0.01"
+                placeholder="Enter price in rupees"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Profit (Auto-calculated)</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Profit (₹) (Auto-calculated)</label>
               <input
                 type="number"
                 value={calculateTotals(formData.qty || 0, formData.unitCost || 0, formData.unitSalePrice || 0).profit}
