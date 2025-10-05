@@ -102,10 +102,11 @@ export default function Orders() {
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Material</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Size</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Qty</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Factory/Source</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Batch</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total Cost</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total Sale</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Profit</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Notes</th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
@@ -113,14 +114,31 @@ export default function Orders() {
                 <tr key={index} className="hover:bg-gray-50">
                   <td className="px-4 py-4 whitespace-nowrap text-sm font-medium text-blue-600">{row['Order Ref']}</td>
                   <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">{row.Date}</td>
-                  <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">{row.Customer}</td>
+                  <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
+                    {row.Customer}
+                    {row['Customer ID'] && (
+                      <div className="text-xs text-gray-500">{row['Customer ID']}</div>
+                    )}
+                  </td>
                   <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">{row.Material}</td>
                   <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">{row['Piece Size (mm)']}</td>
                   <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">{row.Qty}</td>
+                  <td className="px-4 py-4 text-sm text-gray-900">
+                    {row['Factory Name'] ? (
+                      <div>
+                        <div className="font-medium">{row['Factory Name']}</div>
+                        <div className="text-xs text-gray-500">{row['Factory ID']}</div>
+                      </div>
+                    ) : (
+                      <span className="text-gray-400">-</span>
+                    )}
+                  </td>
+                  <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {row['Batch Ref'] || '-'}
+                  </td>
                   <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">${row['Total Cost']?.toFixed(2)}</td>
                   <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">${row['Total Sale']?.toFixed(2)}</td>
                   <td className="px-4 py-4 whitespace-nowrap text-sm text-green-600 font-medium">${row.Profit?.toFixed(2)}</td>
-                  <td className="px-4 py-4 text-sm text-gray-500 max-w-xs truncate">{row.Notes}</td>
                 </tr>
               ))}
             </tbody>
@@ -137,7 +155,7 @@ export default function Orders() {
           </div>
           <div className="ml-3">
             <p className="text-sm text-blue-700">
-              Track and manage all customer orders. Data is loaded from the Excel file in the public folder.
+              Track and manage all customer orders with complete material traceability. Each order is linked to a customer and shows which sheet was used (and thus the factory/batch), enabling full end-to-end tracking from supplier to customer.
             </p>
           </div>
         </div>
