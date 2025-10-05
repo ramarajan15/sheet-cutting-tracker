@@ -1,13 +1,14 @@
 import React, { useEffect, useState } from 'react';
-import { readPurchases, readFactories, Purchase, Factory, exportToExcel } from '@/utils/excelUtils';
+import { readPurchases, readFactories, readProducts, Purchase, Factory, Product, exportToExcel } from '@/utils/excelUtils';
 import Modal from '@/components/Modal';
 
 export default function Purchases() {
   const [purchases, setPurchases] = useState<Purchase[]>([]);
   const [factories, setFactories] = useState<Factory[]>([]);
+  const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [filterFactory, setFilterFactory] = useState<string>('all');
-  const [filterMaterial, setFilterMaterial] = useState<string>('all');
+  const [filterProduct, setFilterProduct] = useState<string>('all');
   
   // Modal states
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -20,7 +21,7 @@ export default function Purchases() {
     id: '',
     date: '',
     factoryId: '',
-    material: '',
+    productId: '',
     size: '',
     thickness: '',
     qty: 0,
@@ -35,8 +36,10 @@ export default function Purchases() {
       try {
         const purchasesData = await readPurchases('SheetCuttingBusinessTemplate.xlsx');
         const factoriesData = await readFactories('SheetCuttingBusinessTemplate.xlsx');
+        const productsData = await readProducts('SheetCuttingBusinessTemplate.xlsx');
         setPurchases(purchasesData);
         setFactories(factoriesData);
+        setProducts(productsData);
         setLoading(false);
       } catch (error) {
         console.error('Error loading purchases data:', error);
@@ -47,12 +50,12 @@ export default function Purchases() {
     loadData();
   }, []);
 
-  const uniqueMaterials = Array.from(new Set(purchases.map(p => p.material).filter(Boolean)));
+  const uniqueProducts = Array.from(new Set(purchases.map(p => p.productId).filter(Boolean)));
 
   const filteredPurchases = purchases.filter(purchase => {
     const matchesFactory = filterFactory === 'all' || purchase.factoryId === filterFactory;
-    const matchesMaterial = filterMaterial === 'all' || purchase.material === filterMaterial;
-    return matchesFactory && matchesMaterial;
+    const matchesProduct = filterProduct === 'all' || purchase.productId === filterProduct;
+    return matchesFactory && matchesProduct;
   });
 
   const totalPurchases = filteredPurchases.length;
@@ -64,6 +67,15 @@ export default function Purchases() {
     return factory?.name || factoryId;
   };
 
+  const getProductName = (productId: string) => {
+    const product = products.find(p => p.id === productId);
+    return product?.name || productId;
+  };
+
+  const getProduct = (productId: string) => {
+    return products.find(p => p.id === productId);
+  };
+
   // CRUD handlers
   const handleAdd = () => {
     const today = new Date().toISOString().split('T')[0];
@@ -71,7 +83,7 @@ export default function Purchases() {
       id: '',
       date: today,
       factoryId: '',
-      material: '',
+      productId: '',
       size: '',
       thickness: '',
       qty: 0,
@@ -99,20 +111,22 @@ export default function Purchases() {
   };
 
   const handleSaveAdd = () => {
-    if (!formData.id || !formData.factoryId || !formData.material) {
-      alert('Please fill in required fields (ID, Factory, Material)');
+    if (!formData.id || !formData.factoryId || !formData.productId) {
+      alert('Please fill in required fields (ID, Factory, Product)');
       return;
     }
 
     const totalCost = calculateTotalCost(formData.qty || 0, formData.unitCost || 0);
     const factoryName = getFactoryName(formData.factoryId || '');
+    const productName = getProductName(formData.productId || '');
 
     const newPurchase: Purchase = {
       id: formData.id!,
       date: formData.date || new Date().toISOString().split('T')[0],
       factoryId: formData.factoryId!,
       factoryName,
-      material: formData.material!,
+      productId: formData.productId!,
+      productName,
       size: formData.size || '',
       thickness: formData.thickness || '',
       qty: formData.qty || 0,
@@ -127,16 +141,17 @@ export default function Purchases() {
   };
 
   const handleSaveEdit = () => {
-    if (!formData.id || !formData.factoryId || !formData.material) {
-      alert('Please fill in required fields (ID, Factory, Material)');
+    if (!formData.id || !formData.factoryId || !formData.productId) {
+      alert('Please fill in required fields (ID, Factory, Product)');
       return;
     }
 
     const totalCost = calculateTotalCost(formData.qty || 0, formData.unitCost || 0);
     const factoryName = getFactoryName(formData.factoryId || '');
+    const productName = getProductName(formData.productId || '');
 
     const updatedPurchases = purchases.map(p =>
-      p.id === currentPurchase?.id ? { ...formData as Purchase, totalCost, factoryName } : p
+      p.id === currentPurchase?.id ? { ...formData as Purchase, totalCost, factoryName, productName } : p
     );
 
     setPurchases(updatedPurchases);
@@ -154,7 +169,8 @@ export default function Purchases() {
   const handleExport = () => {
     exportToExcel('SheetCuttingBusinessTemplate_Export.xlsx', {
       purchases,
-      factories
+      factories,
+      products
     });
   };
 
@@ -224,17 +240,17 @@ export default function Purchases() {
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Filter by Material
+              Filter by Product
             </label>
             <select
-              value={filterMaterial}
-              onChange={(e) => setFilterMaterial(e.target.value)}
+              value={filterProduct}
+              onChange={(e) => setFilterProduct(e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
             >
-              <option value="all">All Materials</option>
-              {uniqueMaterials.map(material => (
-                <option key={material} value={material}>
-                  {material}
+              <option value="all">All Products</option>
+              {uniqueProducts.map(productId => (
+                <option key={productId} value={productId}>
+                  {getProductName(productId)}
                 </option>
               ))}
             </select>
@@ -257,7 +273,7 @@ export default function Purchases() {
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Purchase ID</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Factory</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Material</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Product</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Size (mm)</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Thickness</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Qty</th>
@@ -281,7 +297,7 @@ export default function Purchases() {
                     <div className="text-xs text-gray-500">{purchase.factoryId}</div>
                   </td>
                   <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {purchase.material}
+                    {getProductName(purchase.productId)}
                   </td>
                   <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
                     {purchase.size}
@@ -345,7 +361,8 @@ export default function Purchases() {
               </p>
               <ul className="list-disc list-inside space-y-1 ml-4">
                 <li>Factory/supplier source for complete traceability</li>
-                <li>Material type, size, and quantity</li>
+                <li>Product selection from master Products data</li>
+                <li>Dimensions and costs auto-filled from selected product</li>
                 <li>Cost information (unit and total)</li>
                 <li>Batch/reference number for tracking</li>
                 <li>Date of purchase for inventory management</li>
@@ -394,14 +411,32 @@ export default function Purchases() {
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Material *</label>
-              <input
-                type="text"
-                value={formData.material}
-                onChange={(e) => setFormData({ ...formData, material: e.target.value })}
+              <label className="block text-sm font-medium text-gray-700 mb-1">Product *</label>
+              <select
+                value={formData.productId}
+                onChange={(e) => {
+                  const productId = e.target.value;
+                  const product = getProduct(productId);
+                  if (product) {
+                    // Auto-fill dimensions and price from product
+                    setFormData({ 
+                      ...formData, 
+                      productId,
+                      size: `${product.length}x${product.width}`,
+                      thickness: `${product.thickness}mm`,
+                      unitCost: product.unitCost * product.area // Convert from per-mm² to per-sheet
+                    });
+                  } else {
+                    setFormData({ ...formData, productId });
+                  }
+                }}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="e.g., Stainless Steel"
-              />
+              >
+                <option value="">Select Product</option>
+                {products.map(product => (
+                  <option key={product.id} value={product.id}>{product.name}</option>
+                ))}
+              </select>
             </div>
           </div>
           <div className="grid grid-cols-3 gap-4">
@@ -410,9 +445,9 @@ export default function Purchases() {
               <input
                 type="text"
                 value={formData.size}
-                onChange={(e) => setFormData({ ...formData, size: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="e.g., 2440x1220 (in mm)"
+                readOnly
+                className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-100"
+                placeholder="Auto-filled from product"
               />
             </div>
             <div>
@@ -420,9 +455,9 @@ export default function Purchases() {
               <input
                 type="text"
                 value={formData.thickness}
-                onChange={(e) => setFormData({ ...formData, thickness: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="e.g., 3mm"
+                readOnly
+                className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-100"
+                placeholder="Auto-filled from product"
               />
             </div>
             <div>
@@ -438,14 +473,13 @@ export default function Purchases() {
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Unit Cost</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Unit Cost (₹)</label>
               <input
                 type="number"
                 value={formData.unitCost}
-                onChange={(e) => setFormData({ ...formData, unitCost: parseFloat(e.target.value) || 0 })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                min="0"
-                step="0.01"
+                readOnly
+                className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-100"
+                placeholder="Auto-filled from product"
               />
             </div>
             <div>
@@ -532,13 +566,32 @@ export default function Purchases() {
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Material *</label>
-              <input
-                type="text"
-                value={formData.material}
-                onChange={(e) => setFormData({ ...formData, material: e.target.value })}
+              <label className="block text-sm font-medium text-gray-700 mb-1">Product *</label>
+              <select
+                value={formData.productId}
+                onChange={(e) => {
+                  const productId = e.target.value;
+                  const product = getProduct(productId);
+                  if (product) {
+                    // Auto-fill dimensions and price from product
+                    setFormData({ 
+                      ...formData, 
+                      productId,
+                      size: `${product.length}x${product.width}`,
+                      thickness: `${product.thickness}mm`,
+                      unitCost: product.unitCost * product.area
+                    });
+                  } else {
+                    setFormData({ ...formData, productId });
+                  }
+                }}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
+              >
+                <option value="">Select Product</option>
+                {products.map(product => (
+                  <option key={product.id} value={product.id}>{product.name}</option>
+                ))}
+              </select>
             </div>
           </div>
           <div className="grid grid-cols-3 gap-4">
@@ -547,9 +600,9 @@ export default function Purchases() {
               <input
                 type="text"
                 value={formData.size}
-                onChange={(e) => setFormData({ ...formData, size: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="e.g., 2440x1220 (in mm)"
+                readOnly
+                className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-100"
+                placeholder="Auto-filled from product"
               />
             </div>
             <div>
@@ -557,9 +610,9 @@ export default function Purchases() {
               <input
                 type="text"
                 value={formData.thickness}
-                onChange={(e) => setFormData({ ...formData, thickness: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="e.g., 3mm"
+                readOnly
+                className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-100"
+                placeholder="Auto-filled from product"
               />
             </div>
             <div>
@@ -579,11 +632,9 @@ export default function Purchases() {
               <input
                 type="number"
                 value={formData.unitCost}
-                onChange={(e) => setFormData({ ...formData, unitCost: parseFloat(e.target.value) || 0 })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                min="0"
-                step="0.01"
-                placeholder="Enter cost in rupees"
+                readOnly
+                className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-100"
+                placeholder="Auto-filled from product"
               />
             </div>
             <div>

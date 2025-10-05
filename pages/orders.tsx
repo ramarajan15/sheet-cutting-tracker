@@ -1,13 +1,14 @@
 import React, { useEffect, useState } from 'react';
-import { readOrders, readCustomers, Order, OrderItem, Customer, exportToExcel } from '@/utils/excelUtils';
+import { readOrders, readCustomers, readProducts, Order, OrderItem, Customer, Product, exportToExcel } from '@/utils/excelUtils';
 import Modal from '@/components/Modal';
 
 export default function Orders() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [customers, setCustomers] = useState<Customer[]>([]);
+  const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
-  const [filterMaterial, setFilterMaterial] = useState<string>('all');
-  const [materials, setMaterials] = useState<string[]>([]);
+  const [filterProduct, setFilterProduct] = useState<string>('all');
+  const [productsFilter, setProductsFilter] = useState<string[]>([]);
   const [expandedOrders, setExpandedOrders] = useState<Set<string>>(new Set());
   
   // Modal states
@@ -34,22 +35,21 @@ export default function Orders() {
       try {
         const ordersData = await readOrders('SheetCuttingBusinessTemplate.xlsx');
         const customersData = await readCustomers('SheetCuttingBusinessTemplate.xlsx');
+        const productsData = await readProducts('SheetCuttingBusinessTemplate.xlsx');
         setOrders(ordersData);
         setCustomers(customersData);
+        setProducts(productsData);
         
-        // Extract unique materials from all order items
-        const uniqueMaterials = new Set<string>();
+        // Extract unique products from all order items
+        const uniqueProducts = new Set<string>();
         ordersData.forEach(order => {
           if (order.items && order.items.length > 0) {
             order.items.forEach(item => {
-              if (item.material) uniqueMaterials.add(item.material);
+              if (item.productId) uniqueProducts.add(item.productId);
             });
-          } else if (order.material) {
-            // Legacy single-item orders
-            uniqueMaterials.add(order.material);
           }
         });
-        setMaterials(Array.from(uniqueMaterials));
+        setProductsFilter(Array.from(uniqueProducts));
         
         setLoading(false);
       } catch (error) {
@@ -61,18 +61,27 @@ export default function Orders() {
     loadData();
   }, []);
 
-  const filteredOrders = filterMaterial === 'all' 
+  const filteredOrders = filterProduct === 'all' 
     ? orders 
     : orders.filter(order => {
         if (order.items && order.items.length > 0) {
-          return order.items.some(item => item.material === filterMaterial);
+          return order.items.some(item => item.productId === filterProduct);
         }
-        return order.material === filterMaterial;
+        return false;
       });
 
   const getCustomerName = (customerId: string) => {
     const customer = customers.find(c => c.id === customerId);
     return customer?.name || customerId;
+  };
+
+  const getProductName = (productId: string) => {
+    const product = products.find(p => p.id === productId);
+    return product?.name || productId;
+  };
+
+  const getProduct = (productId: string) => {
+    return products.find(p => p.id === productId);
   };
 
   // CRUD handlers
@@ -88,7 +97,8 @@ export default function Orders() {
     });
     setLineItems([{
       id: `item-${Date.now()}`,
-      material: '',
+      productId: '',
+      productName: '',
       length: 0,
       width: 0,
       qty: 0,
@@ -103,12 +113,13 @@ export default function Orders() {
     setFormData({ ...order });
     setLineItems(order.items && order.items.length > 0 ? [...order.items] : [{
       id: `item-${Date.now()}`,
-      material: order.material || '',
-      length: order.pieceSize ? parseFloat(order.pieceSize.split('x')[0]) || 0 : 0,
-      width: order.pieceSize ? parseFloat(order.pieceSize.split('x')[1]) || 0 : 0,
-      qty: order.qty || 0,
-      unitCost: order.unitCost || 0,
-      unitSalePrice: order.unitSalePrice || 0
+      productId: '',
+      productName: '',
+      length: 0,
+      width: 0,
+      qty: 0,
+      unitCost: 0,
+      unitSalePrice: 0
     }]);
     setIsEditModalOpen(true);
   };
@@ -140,7 +151,8 @@ export default function Orders() {
   const addLineItem = () => {
     setLineItems([...lineItems, {
       id: `item-${Date.now()}`,
-      material: '',
+      productId: '',
+      productName: '',
       length: 0,
       width: 0,
       qty: 0,
@@ -167,8 +179,8 @@ export default function Orders() {
       return;
     }
 
-    if (lineItems.length === 0 || lineItems.some(item => !item.material || item.qty <= 0)) {
-      alert('Please add at least one valid line item with material and quantity');
+    if (lineItems.length === 0 || lineItems.some(item => !item.productId || item.qty <= 0)) {
+      alert('Please add at least one valid line item with product and quantity');
       return;
     }
 
@@ -210,8 +222,8 @@ export default function Orders() {
       return;
     }
 
-    if (lineItems.length === 0 || lineItems.some(item => !item.material || item.qty <= 0)) {
-      alert('Please add at least one valid line item with material and quantity');
+    if (lineItems.length === 0 || lineItems.some(item => !item.productId || item.qty <= 0)) {
+      alert('Please add at least one valid line item with product and quantity');
       return;
     }
 
@@ -266,7 +278,8 @@ export default function Orders() {
   const handleExport = () => {
     exportToExcel('SheetCuttingBusinessTemplate_Export.xlsx', {
       orders,
-      customers
+      customers,
+      products
     });
   };
 
@@ -296,19 +309,19 @@ export default function Orders() {
             + Add New Order
           </button>
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
-            <label htmlFor="material-filter" className="text-sm font-medium text-gray-700">
-              Filter by Material:
+            <label htmlFor="product-filter" className="text-sm font-medium text-gray-700">
+              Filter by Product:
             </label>
             <select
-              id="material-filter"
-              value={filterMaterial}
-              onChange={(e) => setFilterMaterial(e.target.value)}
+              id="product-filter"
+              value={filterProduct}
+              onChange={(e) => setFilterProduct(e.target.value)}
               className="border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
             >
-              <option value="all">All Materials</option>
-              {materials.map((material) => (
-                <option key={material} value={material}>
-                  {material}
+              <option value="all">All Products</option>
+              {productsFilter.map((productId) => (
+                <option key={productId} value={productId}>
+                  {getProductName(productId)}
                 </option>
               ))}
             </select>
@@ -364,7 +377,7 @@ export default function Orders() {
                 {filteredOrders.length === 0 ? (
                   <tr>
                     <td colSpan={8} className="px-4 py-8 text-center text-gray-500">
-                      No orders found. {filterMaterial !== 'all' ? 'Try changing the filter or ' : ''}Click &quot;Add New Order&quot; to create one.
+                      No orders found. {filterProduct !== 'all' ? 'Try changing the filter or ' : ''}Click &quot;Add New Order&quot; to create one.
                     </td>
                   </tr>
                 ) : (
@@ -427,7 +440,7 @@ export default function Orders() {
                                   <thead className="bg-gray-100">
                                     <tr>
                                       <th className="px-2 py-2 text-left text-xs font-medium text-gray-500">#</th>
-                                      <th className="px-2 py-2 text-left text-xs font-medium text-gray-500">Material</th>
+                                      <th className="px-2 py-2 text-left text-xs font-medium text-gray-500">Product</th>
                                       <th className="px-2 py-2 text-left text-xs font-medium text-gray-500">Dimensions (mm)</th>
                                       <th className="px-2 py-2 text-left text-xs font-medium text-gray-500">Qty</th>
                                       <th className="px-2 py-2 text-left text-xs font-medium text-gray-500">Unit Cost (₹)</th>
@@ -440,7 +453,7 @@ export default function Orders() {
                                     {order.items.map((item, idx) => (
                                       <tr key={item.id}>
                                         <td className="px-2 py-2 text-xs text-gray-900">{idx + 1}</td>
-                                        <td className="px-2 py-2 text-xs text-gray-900">{item.material}</td>
+                                        <td className="px-2 py-2 text-xs text-gray-900">{item.productName || getProductName(item.productId)}</td>
                                         <td className="px-2 py-2 text-xs text-gray-900">{item.length}×{item.width}</td>
                                         <td className="px-2 py-2 text-xs text-gray-900">{item.qty}</td>
                                         <td className="px-2 py-2 text-xs text-gray-900">₹{(item.unitCost || 0).toFixed(2)}</td>
@@ -474,7 +487,7 @@ export default function Orders() {
           </div>
           <div className="ml-3">
             <p className="text-xs sm:text-sm text-blue-700">
-              Track and manage all customer orders with complete material traceability. Each order is linked to a customer and shows which sheet was used (and thus the factory/batch), enabling full end-to-end tracking from supplier to customer.
+              Track and manage all customer orders with complete product traceability. Each order is linked to a customer and shows which product was used, enabling full end-to-end tracking from supplier to customer.
             </p>
           </div>
         </div>
@@ -556,24 +569,38 @@ export default function Orders() {
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                     <div className="lg:col-span-3">
-                      <label className="block text-xs font-medium text-gray-600 mb-1">Material *</label>
-                      <input
-                        type="text"
-                        value={item.material}
-                        onChange={(e) => updateLineItem(index, 'material', e.target.value)}
+                      <label className="block text-xs font-medium text-gray-600 mb-1">Product *</label>
+                      <select
+                        value={item.productId}
+                        onChange={(e) => {
+                          const productId = e.target.value;
+                          const product = getProduct(productId);
+                          if (product) {
+                            updateLineItem(index, 'productId', productId);
+                            updateLineItem(index, 'productName', product.name);
+                            updateLineItem(index, 'length', product.length);
+                            updateLineItem(index, 'width', product.width);
+                            updateLineItem(index, 'unitCost', product.unitCost * product.area);
+                          } else {
+                            updateLineItem(index, 'productId', productId);
+                          }
+                        }}
                         className="w-full px-2 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        placeholder="e.g., Aluminium Sheet, Stainless Steel"
-                      />
+                      >
+                        <option value="">Select Product</option>
+                        {products.map(product => (
+                          <option key={product.id} value={product.id}>{product.name}</option>
+                        ))}
+                      </select>
                     </div>
                     <div>
                       <label className="block text-xs font-medium text-gray-600 mb-1">Length (mm) *</label>
                       <input
                         type="number"
                         value={item.length}
-                        onChange={(e) => updateLineItem(index, 'length', parseFloat(e.target.value) || 0)}
-                        className="w-full px-2 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        min="0"
-                        placeholder="500"
+                        readOnly
+                        className="w-full px-2 py-2 border border-gray-300 rounded-md text-sm bg-gray-100"
+                        placeholder="Auto-filled"
                       />
                     </div>
                     <div>
@@ -581,10 +608,9 @@ export default function Orders() {
                       <input
                         type="number"
                         value={item.width}
-                        onChange={(e) => updateLineItem(index, 'width', parseFloat(e.target.value) || 0)}
-                        className="w-full px-2 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        min="0"
-                        placeholder="300"
+                        readOnly
+                        className="w-full px-2 py-2 border border-gray-300 rounded-md text-sm bg-gray-100"
+                        placeholder="Auto-filled"
                       />
                     </div>
                     <div>
@@ -603,10 +629,9 @@ export default function Orders() {
                       <input
                         type="number"
                         value={item.unitCost}
-                        onChange={(e) => updateLineItem(index, 'unitCost', parseFloat(e.target.value) || 0)}
-                        className="w-full px-2 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        min="0"
-                        step="0.01"
+                        readOnly
+                        className="w-full px-2 py-2 border border-gray-300 rounded-md text-sm bg-gray-100"
+                        placeholder="Auto-filled"
                       />
                     </div>
                     <div>
@@ -761,24 +786,38 @@ export default function Orders() {
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                     <div className="lg:col-span-3">
-                      <label className="block text-xs font-medium text-gray-600 mb-1">Material *</label>
-                      <input
-                        type="text"
-                        value={item.material}
-                        onChange={(e) => updateLineItem(index, 'material', e.target.value)}
+                      <label className="block text-xs font-medium text-gray-600 mb-1">Product *</label>
+                      <select
+                        value={item.productId}
+                        onChange={(e) => {
+                          const productId = e.target.value;
+                          const product = getProduct(productId);
+                          if (product) {
+                            updateLineItem(index, 'productId', productId);
+                            updateLineItem(index, 'productName', product.name);
+                            updateLineItem(index, 'length', product.length);
+                            updateLineItem(index, 'width', product.width);
+                            updateLineItem(index, 'unitCost', product.unitCost * product.area);
+                          } else {
+                            updateLineItem(index, 'productId', productId);
+                          }
+                        }}
                         className="w-full px-2 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        placeholder="e.g., Aluminium Sheet, Stainless Steel"
-                      />
+                      >
+                        <option value="">Select Product</option>
+                        {products.map(product => (
+                          <option key={product.id} value={product.id}>{product.name}</option>
+                        ))}
+                      </select>
                     </div>
                     <div>
                       <label className="block text-xs font-medium text-gray-600 mb-1">Length (mm) *</label>
                       <input
                         type="number"
                         value={item.length}
-                        onChange={(e) => updateLineItem(index, 'length', parseFloat(e.target.value) || 0)}
-                        className="w-full px-2 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        min="0"
-                        placeholder="500"
+                        readOnly
+                        className="w-full px-2 py-2 border border-gray-300 rounded-md text-sm bg-gray-100"
+                        placeholder="Auto-filled"
                       />
                     </div>
                     <div>
@@ -786,10 +825,9 @@ export default function Orders() {
                       <input
                         type="number"
                         value={item.width}
-                        onChange={(e) => updateLineItem(index, 'width', parseFloat(e.target.value) || 0)}
-                        className="w-full px-2 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        min="0"
-                        placeholder="300"
+                        readOnly
+                        className="w-full px-2 py-2 border border-gray-300 rounded-md text-sm bg-gray-100"
+                        placeholder="Auto-filled"
                       />
                     </div>
                     <div>
@@ -808,10 +846,9 @@ export default function Orders() {
                       <input
                         type="number"
                         value={item.unitCost}
-                        onChange={(e) => updateLineItem(index, 'unitCost', parseFloat(e.target.value) || 0)}
-                        className="w-full px-2 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        min="0"
-                        step="0.01"
+                        readOnly
+                        className="w-full px-2 py-2 border border-gray-300 rounded-md text-sm bg-gray-100"
+                        placeholder="Auto-filled"
                       />
                     </div>
                     <div>
