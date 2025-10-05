@@ -22,6 +22,9 @@ export interface Factory {
   notes?: string;
 }
 
+// Supplier is an alias for Factory to support new naming convention
+export type Supplier = Factory;
+
 export interface Category {
   id: string;
   name: string;
@@ -203,10 +206,17 @@ export const readCustomers = async (filename: string): Promise<Customer[]> => {
 };
 
 /**
- * Read factories from Excel file
+ * Read factories from Excel file (legacy name for suppliers)
  */
 export const readFactories = async (filename: string): Promise<Factory[]> => {
   return readExcelSheet<Factory>(filename, 'Factories');
+};
+
+/**
+ * Read suppliers from Excel file
+ */
+export const readSuppliers = async (filename: string): Promise<Supplier[]> => {
+  return readExcelSheet<Supplier>(filename, 'Factories');
 };
 
 /**

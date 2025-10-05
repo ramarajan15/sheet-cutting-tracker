@@ -13,7 +13,7 @@ const Navigation: React.FC = () => {
     { href: '/orders', label: 'Orders' },
     { href: '/leftovers', label: 'Leftovers' },
     { href: '/customers', label: 'Customers' },
-    { href: '/factories', label: 'Factories' },
+    { href: '/suppliers', label: 'Suppliers' },
     { href: '/purchases', label: 'Purchases' },
     { href: '/visualizer', label: 'Visualizer' },
   ];

@@ -1,21 +1,21 @@
 import React, { useEffect, useState } from 'react';
-import { readFactories, readPurchases, Factory, Purchase, exportToExcel } from '@/utils/excelUtils';
+import { readSuppliers, readPurchases, Supplier, Purchase, exportToExcel } from '@/utils/excelUtils';
 import Modal from '@/components/Modal';
 
-export default function Factories() {
-  const [factories, setFactories] = useState<Factory[]>([]);
+export default function Suppliers() {
+  const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [purchases, setPurchases] = useState<Purchase[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedFactory, setSelectedFactory] = useState<string | null>(null);
+  const [selectedSupplier, setSelectedSupplier] = useState<string | null>(null);
   
   // Modal states
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const [currentFactory, setCurrentFactory] = useState<Factory | null>(null);
+  const [currentSupplier, setCurrentSupplier] = useState<Supplier | null>(null);
   
   // Form state
-  const [formData, setFormData] = useState<Partial<Factory>>({
+  const [formData, setFormData] = useState<Partial<Supplier>>({
     id: '',
     name: '',
     location: '',
@@ -29,13 +29,13 @@ export default function Factories() {
   useEffect(() => {
     const loadData = async () => {
       try {
-        const factoriesData = await readFactories('SheetCuttingBusinessTemplate.xlsx');
+        const suppliersData = await readSuppliers('SheetCuttingBusinessTemplate.xlsx');
         const purchasesData = await readPurchases('SheetCuttingBusinessTemplate.xlsx');
-        setFactories(factoriesData);
+        setSuppliers(suppliersData);
         setPurchases(purchasesData);
         setLoading(false);
       } catch (error) {
-        console.error('Error loading factories data:', error);
+        console.error('Error loading suppliers data:', error);
         setLoading(false);
       }
     };
@@ -43,18 +43,18 @@ export default function Factories() {
     loadData();
   }, []);
 
-  const getFactoryPurchases = (factoryId: string) => {
-    return purchases.filter(purchase => purchase.factoryId === factoryId);
+  const getSupplierPurchases = (supplierId: string) => {
+    return purchases.filter(purchase => purchase.factoryId === supplierId);
   };
 
-  const calculateFactoryTotal = (factoryId: string) => {
-    const factoryPurchases = getFactoryPurchases(factoryId);
-    return factoryPurchases.reduce((total, purchase) => total + (purchase.totalCost || 0), 0);
+  const calculateSupplierTotal = (supplierId: string) => {
+    const supplierPurchases = getSupplierPurchases(supplierId);
+    return supplierPurchases.reduce((total, purchase) => total + (purchase.totalCost || 0), 0);
   };
 
-  const getFactoryMaterials = (factoryId: string) => {
-    const factoryPurchases = getFactoryPurchases(factoryId);
-    const materials = new Set(factoryPurchases.map(p => p.material));
+  const getSupplierMaterials = (supplierId: string) => {
+    const supplierPurchases = getSupplierPurchases(supplierId);
+    const materials = new Set(supplierPurchases.map(p => p.material));
     return Array.from(materials);
   };
 
@@ -73,14 +73,14 @@ export default function Factories() {
     setIsAddModalOpen(true);
   };
 
-  const handleEdit = (factory: Factory) => {
-    setCurrentFactory(factory);
-    setFormData({ ...factory });
+  const handleEdit = (supplier: Supplier) => {
+    setCurrentSupplier(supplier);
+    setFormData({ ...supplier });
     setIsEditModalOpen(true);
   };
 
-  const handleDelete = (factory: Factory) => {
-    setCurrentFactory(factory);
+  const handleDelete = (supplier: Supplier) => {
+    setCurrentSupplier(supplier);
     setIsDeleteModalOpen(true);
   };
 
@@ -90,7 +90,7 @@ export default function Factories() {
       return;
     }
 
-    const newFactory: Factory = {
+    const newSupplier: Supplier = {
       id: formData.id,
       name: formData.name,
       location: formData.location || '',
@@ -101,7 +101,7 @@ export default function Factories() {
       notes: formData.notes || ''
     };
 
-    setFactories([...factories, newFactory]);
+    setSuppliers([...suppliers, newSupplier]);
     setIsAddModalOpen(false);
   };
 
@@ -111,25 +111,25 @@ export default function Factories() {
       return;
     }
 
-    const updatedFactories = factories.map(f =>
-      f.id === currentFactory?.id ? { ...formData as Factory } : f
+    const updatedSuppliers = suppliers.map(s =>
+      s.id === currentSupplier?.id ? { ...formData as Supplier } : s
     );
 
-    setFactories(updatedFactories);
+    setSuppliers(updatedSuppliers);
     setIsEditModalOpen(false);
   };
 
   const handleConfirmDelete = () => {
-    if (currentFactory) {
-      setFactories(factories.filter(f => f.id !== currentFactory.id));
+    if (currentSupplier) {
+      setSuppliers(suppliers.filter(s => s.id !== currentSupplier.id));
       setIsDeleteModalOpen(false);
-      setCurrentFactory(null);
+      setCurrentSupplier(null);
     }
   };
 
   const handleExport = () => {
     exportToExcel('SheetCuttingBusinessTemplate_Export.xlsx', {
-      factories,
+      factories: suppliers,
       purchases
     });
   };
@@ -137,7 +137,7 @@ export default function Factories() {
   if (loading) {
     return (
       <div className="flex justify-center items-center h-64">
-        <p className="text-xl">Loading factories data...</p>
+        <p className="text-xl">Loading suppliers data...</p>
       </div>
     );
   }
@@ -145,7 +145,7 @@ export default function Factories() {
   return (
     <div>
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-4 sm:mb-6">
-        <h1 className="text-2xl sm:text-3xl font-bold">Factory/Supplier Management</h1>
+        <h1 className="text-2xl sm:text-3xl font-bold">Supplier Management</h1>
         <div className="flex flex-col sm:flex-row gap-2">
           <button
             onClick={handleExport}
@@ -157,7 +157,7 @@ export default function Factories() {
             onClick={handleAdd}
             className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md font-medium transition-colors text-sm sm:text-base"
           >
-            + Add New Factory
+            + Add New Supplier
           </button>
         </div>
       </div>
@@ -165,8 +165,8 @@ export default function Factories() {
       {/* Summary Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-4 sm:mb-6">
         <div className="bg-blue-50 rounded-lg shadow-md p-4 sm:p-6">
-          <h3 className="text-xs sm:text-sm font-medium text-blue-600 uppercase tracking-wide">Total Factories</h3>
-          <p className="text-2xl sm:text-3xl font-bold text-blue-900 mt-2">{factories.length}</p>
+          <h3 className="text-xs sm:text-sm font-medium text-blue-600 uppercase tracking-wide">Total Suppliers</h3>
+          <p className="text-2xl sm:text-3xl font-bold text-blue-900 mt-2">{suppliers.length}</p>
         </div>
         <div className="bg-green-50 rounded-lg shadow-md p-4 sm:p-6">
           <h3 className="text-xs sm:text-sm font-medium text-green-600 uppercase tracking-wide">Total Purchases</h3>
@@ -180,19 +180,19 @@ export default function Factories() {
         </div>
       </div>
 
-      {/* Factories Table */}
+      {/* Suppliers Table */}
       <div className="bg-white rounded-lg shadow-md overflow-hidden mb-4 sm:mb-6">
         <div className="px-4 sm:px-6 py-4 bg-gray-50 border-b border-gray-200">
-          <h2 className="text-lg sm:text-xl font-bold text-gray-800">Factory Profiles</h2>
+          <h2 className="text-lg sm:text-xl font-bold text-gray-800">Supplier Profiles</h2>
           <p className="text-xs sm:text-sm text-gray-600 mt-1">
-            Track supplier/factory information and materials supplied
+            Track supplier information and materials supplied
           </p>
         </div>
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Factory ID</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Supplier ID</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Location</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Contact</th>
@@ -203,25 +203,25 @@ export default function Factories() {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {factories.map((factory) => {
-                const factoryPurchases = getFactoryPurchases(factory.id);
-                const totalSpent = calculateFactoryTotal(factory.id);
-                const materials = getFactoryMaterials(factory.id);
+              {suppliers.map((supplier) => {
+                const supplierPurchases = getSupplierPurchases(supplier.id);
+                const totalSpent = calculateSupplierTotal(supplier.id);
+                const materials = getSupplierMaterials(supplier.id);
                 
                 return (
-                  <tr key={factory.id} className="hover:bg-gray-50">
+                  <tr key={supplier.id} className="hover:bg-gray-50">
                     <td className="px-4 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                      {factory.id}
+                      {supplier.id}
                     </td>
                     <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {factory.name}
+                      {supplier.name}
                     </td>
                     <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {factory.location || '-'}
+                      {supplier.location || '-'}
                     </td>
                     <td className="px-4 py-4 text-sm text-gray-900">
-                      <div>{factory.email}</div>
-                      <div className="text-xs text-gray-500">{factory.phone}</div>
+                      <div>{supplier.email}</div>
+                      <div className="text-xs text-gray-500">{supplier.phone}</div>
                     </td>
                     <td className="px-4 py-4 text-sm text-gray-900">
                       <div className="flex flex-wrap gap-1">
@@ -236,7 +236,7 @@ export default function Factories() {
                       </div>
                     </td>
                     <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {factoryPurchases.length}
+                      {supplierPurchases.length}
                     </td>
                     <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
                       ₹{totalSpent.toFixed(2)}
@@ -244,22 +244,22 @@ export default function Factories() {
                     <td className="px-4 py-4 whitespace-nowrap text-sm">
                       <div className="flex gap-2">
                         <button
-                          onClick={() => handleEdit(factory)}
+                          onClick={() => handleEdit(supplier)}
                           className="text-blue-600 hover:text-blue-800 font-medium"
                         >
                           Edit
                         </button>
                         <button
-                          onClick={() => handleDelete(factory)}
+                          onClick={() => handleDelete(supplier)}
                           className="text-red-600 hover:text-red-800 font-medium"
                         >
                           Delete
                         </button>
                         <button
-                          onClick={() => setSelectedFactory(selectedFactory === factory.id ? null : factory.id)}
+                          onClick={() => setSelectedSupplier(selectedSupplier === supplier.id ? null : supplier.id)}
                           className="text-gray-600 hover:text-gray-800 font-medium"
                         >
-                          {selectedFactory === factory.id ? 'Hide' : 'View'} Purchases
+                          {selectedSupplier === supplier.id ? 'Hide' : 'View'} Purchases
                         </button>
                       </div>
                     </td>
@@ -271,12 +271,12 @@ export default function Factories() {
         </div>
       </div>
 
-      {/* Purchase History for Selected Factory */}
-      {selectedFactory && (
+      {/* Purchase History for Selected Supplier */}
+      {selectedSupplier && (
         <div className="bg-white rounded-lg shadow-md overflow-hidden">
           <div className="px-6 py-4 bg-blue-50 border-b border-blue-200">
             <h2 className="text-xl font-bold text-gray-800">
-              Purchase History - {factories.find(f => f.id === selectedFactory)?.name}
+              Purchase History - {suppliers.find(s => s.id === selectedSupplier)?.name}
             </h2>
           </div>
           <div className="overflow-x-auto">
@@ -294,7 +294,7 @@ export default function Factories() {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {getFactoryPurchases(selectedFactory).map((purchase) => (
+                {getSupplierPurchases(selectedSupplier).map((purchase) => (
                   <tr key={purchase.id} className="hover:bg-gray-50">
                     <td className="px-4 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                       {purchase.id}
@@ -338,28 +338,28 @@ export default function Factories() {
           </div>
           <div className="ml-3">
             <p className="text-sm text-blue-700">
-              Factory data is loaded from the &apos;Factories&apos; sheet in the Excel file. Each purchase is linked to a factory for complete supply chain traceability.
+              Supplier data is loaded from the &apos;Factories&apos; sheet in the Excel file. Each purchase is linked to a supplier for complete supply chain traceability.
             </p>
           </div>
         </div>
       </div>
 
-      {/* Add Factory Modal */}
-      <Modal isOpen={isAddModalOpen} onClose={() => setIsAddModalOpen(false)} title="Add New Factory" maxWidth="xl">
+      {/* Add Supplier Modal */}
+      <Modal isOpen={isAddModalOpen} onClose={() => setIsAddModalOpen(false)} title="Add New Supplier" maxWidth="xl">
         <div className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Factory ID *</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Supplier ID *</label>
               <input
                 type="text"
                 value={formData.id}
                 onChange={(e) => setFormData({ ...formData, id: e.target.value })}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="e.g., FAC001"
+                placeholder="e.g., SUP001"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Factory Name *</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Supplier Name *</label>
               <input
                 type="text"
                 value={formData.name}
@@ -387,7 +387,7 @@ export default function Factories() {
                 value={formData.email}
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="factory@example.com"
+                placeholder="supplier@example.com"
               />
             </div>
             <div>
@@ -432,18 +432,18 @@ export default function Factories() {
               onClick={handleSaveAdd}
               className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
             >
-              Add Factory
+              Add Supplier
             </button>
           </div>
         </div>
       </Modal>
 
-      {/* Edit Factory Modal */}
-      <Modal isOpen={isEditModalOpen} onClose={() => setIsEditModalOpen(false)} title="Edit Factory" maxWidth="xl">
+      {/* Edit Supplier Modal */}
+      <Modal isOpen={isEditModalOpen} onClose={() => setIsEditModalOpen(false)} title="Edit Supplier" maxWidth="xl">
         <div className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Factory ID *</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Supplier ID *</label>
               <input
                 type="text"
                 value={formData.id}
@@ -453,7 +453,7 @@ export default function Factories() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Factory Name *</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Supplier Name *</label>
               <input
                 type="text"
                 value={formData.name}
@@ -527,10 +527,10 @@ export default function Factories() {
       </Modal>
 
       {/* Delete Confirmation Modal */}
-      <Modal isOpen={isDeleteModalOpen} onClose={() => setIsDeleteModalOpen(false)} title="Delete Factory" maxWidth="md">
+      <Modal isOpen={isDeleteModalOpen} onClose={() => setIsDeleteModalOpen(false)} title="Delete Supplier" maxWidth="md">
         <div>
           <p className="text-gray-700 mb-4">
-            Are you sure you want to delete factory &quot;<strong>{currentFactory?.name}</strong>&quot;?
+            Are you sure you want to delete supplier &quot;<strong>{currentSupplier?.name}</strong>&quot;?
           </p>
           <p className="text-sm text-red-600 mb-6">
             Warning: This action cannot be undone.

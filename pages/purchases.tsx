@@ -1,12 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import { readPurchases, readFactories, Purchase, Factory, exportToExcel } from '@/utils/excelUtils';
+import { readPurchases, readSuppliers, Purchase, Supplier, exportToExcel } from '@/utils/excelUtils';
 import Modal from '@/components/Modal';
 
 export default function Purchases() {
   const [purchases, setPurchases] = useState<Purchase[]>([]);
-  const [factories, setFactories] = useState<Factory[]>([]);
+  const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [loading, setLoading] = useState(true);
-  const [filterFactory, setFilterFactory] = useState<string>('all');
+  const [filterSupplier, setFilterSupplier] = useState<string>('all');
   const [filterMaterial, setFilterMaterial] = useState<string>('all');
   
   // Modal states
@@ -34,9 +34,9 @@ export default function Purchases() {
     const loadData = async () => {
       try {
         const purchasesData = await readPurchases('SheetCuttingBusinessTemplate.xlsx');
-        const factoriesData = await readFactories('SheetCuttingBusinessTemplate.xlsx');
+        const suppliersData = await readSuppliers('SheetCuttingBusinessTemplate.xlsx');
         setPurchases(purchasesData);
-        setFactories(factoriesData);
+        setSuppliers(suppliersData);
         setLoading(false);
       } catch (error) {
         console.error('Error loading purchases data:', error);
@@ -50,18 +50,18 @@ export default function Purchases() {
   const uniqueMaterials = Array.from(new Set(purchases.map(p => p.material).filter(Boolean)));
 
   const filteredPurchases = purchases.filter(purchase => {
-    const matchesFactory = filterFactory === 'all' || purchase.factoryId === filterFactory;
+    const matchesSupplier = filterSupplier === 'all' || purchase.factoryId === filterSupplier;
     const matchesMaterial = filterMaterial === 'all' || purchase.material === filterMaterial;
-    return matchesFactory && matchesMaterial;
+    return matchesSupplier && matchesMaterial;
   });
 
   const totalPurchases = filteredPurchases.length;
   const totalCost = filteredPurchases.reduce((sum, p) => sum + (p.totalCost || 0), 0);
   const totalQty = filteredPurchases.reduce((sum, p) => sum + (p.qty || 0), 0);
 
-  const getFactoryName = (factoryId: string) => {
-    const factory = factories.find(f => f.id === factoryId);
-    return factory?.name || factoryId;
+  const getSupplierName = (supplierId: string) => {
+    const supplier = suppliers.find(s => s.id === supplierId);
+    return supplier?.name || supplierId;
   };
 
   // CRUD handlers
