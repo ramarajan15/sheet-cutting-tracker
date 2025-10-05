@@ -19,15 +19,16 @@ A Next.js web application for managing and tracking sheet cutting operations for
 
 ### Business Management Tools
 - **Dashboard**: View summary statistics and charts for your sheet cutting operations
-- **Stock Management**: Track material inventory and usage with purchase and factory traceability
-- **Orders Management**: Manage customer orders and cutting jobs with sheet-to-factory traceability
+- **Stock Management**: Track product inventory and usage with purchase and supplier traceability
+- **Orders Management**: Manage customer orders and cutting jobs with complete traceability
 - **Leftovers Management**: Track and manage leftover pieces linked to parent sheets
 - **Customer Management**: Complete customer profiles with full order history and CRUD operations
-- **Factory/Supplier Management**: Track suppliers and materials they provide with full CRUD operations
-- **Purchase Management**: Incoming stock tracking with date, factory, material, size, qty, cost, and batch reference with CRUD operations
+- **Supplier Management**: Track suppliers and products they provide with full CRUD operations
+- **Product Catalog Management**: Centralized product database with specifications, dimensions, and pricing
+- **Purchase Management**: Incoming stock tracking with date, supplier, product, size, qty, cost, and batch reference with CRUD operations (products auto-fill dimensions and price)
 - **Sheet Cutting Visualizer**: Visualize and optimize sheet cutting layouts with manual and auto-arrangement
-- **End-to-End Material Traceability**: Full supply chain tracking from factory purchase to customer order
-- **CRUD Operations**: Create, Read, Update, and Delete functionality for Factories, Purchases, Customers, and Orders
+- **End-to-End Product Traceability**: Full supply chain tracking from supplier purchase to customer order
+- **CRUD Operations**: Create, Read, Update, and Delete functionality for Suppliers, Products, Purchases, Customers, and Orders
 - **Excel Export**: Export all data to Excel file for offline use and backup
 
 ## Technology Stack
@@ -44,9 +45,11 @@ This application uses an Excel file (`SheetCuttingBusinessTemplate.xlsx`) stored
 
 - **Orders**: Order data (legacy format for backward compatibility)
 - **Customers**: Customer profiles and contact information
-- **Factories**: Supplier/factory profiles and materials supplied
-- **Purchases**: Incoming stock purchases with factory, date, material, size, qty, cost, and batch reference
-- **Stock**: Stock sheet inventory with purchase and factory links
+- **Factories**: Supplier profiles and products supplied (sheet name kept for backward compatibility)
+- **Categories**: Product category definitions
+- **Products**: Product catalog with specifications, dimensions, and pricing
+- **Purchases**: Incoming stock purchases with supplier, date, product, size, qty, cost, and batch reference
+- **Stock**: Stock sheet inventory with purchase and supplier links
 - **Orders** (enhanced): Orders with customer and sheet traceability
 - **Leftovers**: Leftover pieces linked to parent sheets with factory information
 
@@ -68,9 +71,15 @@ This application uses an Excel file (`SheetCuttingBusinessTemplate.xlsx`) stored
 
 These units are enforced throughout the UI, forms, tables, and Excel integration.
 
-### Material Traceability
+### Product Traceability
 
-The application provides full end-to-end material traceability:
+The application provides full end-to-end product traceability:
+
+1. **Supplier/Product Link**: Each product purchase is linked to a specific supplier
+2. **Purchase to Stock**: Stock sheets reference the original purchase
+3. **Order to Stock**: Orders are linked to the stock sheets used
+4. **Order to Customer**: Full customer information for each order
+5. **Complete Supply Chain**: Track products from supplier purchase through processing to final customer delivery
 
 1. **Purchase → Factory**: Each purchase is linked to a source factory
 2. **Stock Sheet → Purchase**: Each stock sheet is linked to a purchase (and thus to a factory)
@@ -119,12 +128,13 @@ sheet-cutting-tracker/
 ├── pages/                 # Next.js pages
 │   ├── index.tsx         # Enriched home page with Hylam Sheets showcase
 │   ├── dashboard.tsx     # Dashboard with charts
+│   ├── products.tsx      # Product catalog management
 │   ├── stock.tsx         # Stock management
 │   ├── orders.tsx        # Orders management
 │   ├── leftovers.tsx     # Leftovers management
 │   ├── customers.tsx     # Customer profiles and order history
-│   ├── factories.tsx     # Factory/supplier profiles
-│   ├── purchases.tsx     # Purchase management
+│   ├── suppliers.tsx     # Supplier profiles (formerly factories.tsx)
+│   ├── purchases.tsx     # Purchase management with product auto-fill
 │   └── visualizer.tsx    # Sheet cutting visualizer
 ├── components/           # React components
 │   ├── Layout.tsx        # Main layout wrapper with home page special handling
@@ -200,32 +210,54 @@ The home page uses SVG placeholder images stored in `/public/images/` for produc
 
 The application provides full Create, Read, Update, and Delete (CRUD) functionality for managing your business data.
 
-### Managing Factories (Suppliers)
+### Managing Suppliers
 
-Navigate to `/factories` to manage your supplier/factory information:
+Navigate to `/suppliers` to manage your supplier information:
 
-1. **Add New Factory**: Click the "Add New Factory" button in the top-right corner
-   - Fill in required fields: Factory ID and Name
+1. **Add New Supplier**: Click the "Add New Supplier" button in the top-right corner
+   - Fill in required fields: Supplier ID and Name
    - Optional fields: Location, Email, Phone, Contact Person, and Notes
-   - Click "Add Factory" to save
+   - Click "Add Supplier" to save
 
-2. **Edit Factory**: Click "Edit" next to any factory in the table
+2. **Edit Supplier**: Click "Edit" next to any supplier in the table
    - Modify any fields (ID is locked)
    - Click "Save Changes" to update
 
-3. **Delete Factory**: Click "Delete" next to any factory
+3. **Delete Supplier**: Click "Delete" next to any supplier
    - Confirm deletion in the popup modal
    - Warning: This action cannot be undone
 
-4. **Export Data**: Click "Export to Excel" to download current factory and purchase data
+4. **Export Data**: Click "Export to Excel" to download current supplier and purchase data
+
+### Managing Products
+
+Navigate to `/products` to manage your product catalog:
+
+1. **Add New Product**: Click the "Add New Product" button
+   - Required fields: Product ID, Product Name, Category, Length (mm), Width (mm), and Unit Price (₹)
+   - Optional fields: Thickness and Notes
+   - Click "Add Product" to save
+
+2. **Edit Product**: Click "Edit" next to any product in the table
+   - Modify any fields (ID is locked)
+   - Click "Save Changes" to update
+
+3. **Delete Product**: Click "Delete" next to any product
+   - Confirm deletion in the popup modal
+   - Warning: This action cannot be undone
+
+4. **Filter and Search**: Use search and category filters to find specific products quickly
+
+5. **Export Data**: Click "Export to Excel" to download current product catalog
 
 ### Managing Purchases
 
 Navigate to `/purchases` to manage incoming stock purchases:
 
 1. **Add New Purchase**: Click the "Add New Purchase" button
-   - Required fields: Purchase ID, Factory, and Material
-   - Optional fields: Date, Size, Thickness, Quantity, Unit Cost, Batch Reference, and Notes
+   - Required fields: Purchase ID, Supplier, and Product Name
+   - **Product Auto-fill**: When you select a product from the dropdown, dimensions (size, thickness) and unit cost are automatically filled from the product catalog
+   - Optional fields: Date, Quantity, Batch Reference, and Notes
    - Total Cost is automatically calculated from Quantity × Unit Cost
    - Click "Add Purchase" to save
 
@@ -237,7 +269,7 @@ Navigate to `/purchases` to manage incoming stock purchases:
 3. **Delete Purchase**: Click "Delete" next to any purchase
    - Confirm deletion in the popup modal
 
-4. **Filter and Export**: Use the filter dropdowns to narrow down purchases by factory or material, then export to Excel
+4. **Filter and Export**: Use the filter dropdowns to narrow down purchases by supplier or product, then export to Excel
 
 ### Managing Customers
 
@@ -267,7 +299,7 @@ Navigate to `/orders` to manage customer orders with multi-item support:
    - Required fields: Order ID, Order Ref, and Customer
    - **Multi-Item Support**: Each order can contain multiple line items
      - Click "+ Add Item" to add additional line items
-     - Each line item requires: Material, Length (mm), Width (mm), and Quantity
+     - Each line item requires: Product Name, Length (mm), Width (mm), and Quantity
      - Optional per item: Unit Cost (₹) and Unit Sale Price (₹)
      - Click "Remove" to delete a line item (minimum 1 item required)
    - **Automatic Calculations**:
@@ -280,7 +312,7 @@ Navigate to `/orders` to manage customer orders with multi-item support:
    - Orders display with total values and item count badge
    - Click the expand button (▶) next to an order to view line items
    - Expanded view shows detailed breakdown of each line item with:
-     - Material type
+     - Product name
      - Dimensions (length × width in mm)
      - Quantity
      - Unit cost and sale price
@@ -296,8 +328,8 @@ Navigate to `/orders` to manage customer orders with multi-item support:
    - Confirm deletion in the popup modal
    - This will delete the order and all its line items
 
-5. **Filter Orders**: Use the material filter dropdown to narrow down orders
-   - Filters orders containing items with the selected material
+5. **Filter Orders**: Use the product filter dropdown to narrow down orders
+   - Filters orders containing items with the selected product
    - Summary cards update automatically to reflect filtered data
 
 6. **Export Data**: Click "Export to Excel" to download current order and customer data
@@ -341,26 +373,33 @@ To add new features to the application:
 The application uses TypeScript interfaces to define the data structure:
 
 - `Customer`: Customer profiles (id, name, email, phone, address, notes)
-- `Factory`: Supplier/factory profiles (id, name, location, contact, materials)
-- `Purchase`: Purchase records (id, date, factoryId, material, size, qty, cost, batchRef)
-- `StockSheet`: Stock inventory (id, purchaseId, factoryId, material, size, status)
+- `Supplier` (Factory): Supplier profiles (id, name, location, contact, notes) - Excel sheet name "Factories" kept for compatibility
+- `Category`: Product categories (id, name, description)
+- `Product`: Product catalog (id, name, categoryId, length, width, thickness, unitPrice, notes)
+- `Purchase`: Purchase records (id, date, factoryId/supplierId, productId, productName, size, qty, unitCost, totalCost, batchRef, notes)
+  - Dimensions and unit cost auto-filled from product when selected
+- `StockSheet`: Stock inventory (id, purchaseId, factoryId, productId, productName, size, status)
 - `Order`: Order records with multi-item support:
   - Order-level: id, orderRef, date, customerId, items[], totalCost, totalSale, profit, notes
-  - Each item (OrderItem): id, material, length, width, qty, unitCost, unitSalePrice, totalCost, totalSale, profit, notes
+  - Each item (OrderItem): id, productId, productName, length, width, qty, unitCost, unitSalePrice, totalCost, totalSale, profit, notes
+    - Can be auto-filled from product catalog
+- `Leftover`: Leftover pieces (id, parentSheetId, purchaseId, factoryId, productId, productName, dimensions, area)
   - Legacy fields maintained for backward compatibility
-- `Leftover`: Leftover pieces (id, parentSheetId, purchaseId, factoryId, material, dimensions, area)
 
-**Multi-Item Orders**: Orders now support multiple line items, allowing a single customer order to include different materials, sizes, and quantities. The system automatically calculates totals at both item and order levels. Legacy single-item orders are automatically migrated to the new structure.
+**Multi-Item Orders**: Orders now support multiple line items, allowing a single customer order to include different products, sizes, and quantities. The system automatically calculates totals at both item and order levels. Legacy single-item orders are automatically migrated to the new structure.
+
+**Product Auto-fill**: When adding purchases or orders, selecting a product from the dropdown automatically fills in dimensions and unit cost/price from the product catalog. This ensures consistency and reduces data entry errors.
 
 ### Implementing Traceability
 
-To trace materials from factory to customer:
+To trace products from supplier to customer:
 
-1. **Factory → Purchase**: Check `Purchase.factoryId` matches `Factory.id`
+1. **Supplier → Purchase**: Check `Purchase.factoryId` matches `Supplier.id` (Factory interface kept for compatibility)
 2. **Purchase → Stock**: Check `StockSheet.purchaseId` matches `Purchase.id`
 3. **Stock → Order**: Check `Order.sheetId` matches `StockSheet.id`
 4. **Order → Customer**: Check `Order.customerId` matches `Customer.id`
 5. **Stock → Leftover**: Check `Leftover.parentSheetId` matches `StockSheet.id`
+6. **Product Link**: Track `productId` across purchases, stock, orders, and leftovers for complete product lifecycle visibility
 
 ## Data Management
 
@@ -389,8 +428,10 @@ node scripts/generate-sample-data.js
 
 This will create a new Excel file with sample data for:
 - Customers (3 sample customers)
-- Factories (3 sample factories/suppliers)
-- Purchases (3 sample purchases)
+- Suppliers (3 sample suppliers, stored in "Factories" sheet for compatibility)
+- Categories (3 sample product categories)
+- Products (sample product catalog with specifications and pricing)
+- Purchases (3 sample purchases with product references)
 - Orders (4 sample orders with traceability)
 
 You can modify the script to customize the sample data for your needs.
