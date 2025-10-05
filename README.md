@@ -187,6 +187,22 @@ To update the data in the Excel template:
 1. Modify `/public/SheetCuttingBusinessTemplate.xlsx` directly using Excel or LibreOffice
 2. Or implement a custom update function using the SheetJS library
 
+### Regenerating Sample Data
+
+A script is provided to regenerate the sample Excel data with multiple sheets:
+
+```bash
+node scripts/generate-sample-data.js
+```
+
+This will create a new Excel file with sample data for:
+- Customers (3 sample customers)
+- Factories (3 sample factories/suppliers)
+- Purchases (3 sample purchases)
+- Orders (4 sample orders with traceability)
+
+You can modify the script to customize the sample data for your needs.
+
 ## Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request.
