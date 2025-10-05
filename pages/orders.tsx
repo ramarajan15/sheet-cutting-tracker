@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { readOrders, readCustomers, Order, Customer, exportToExcel } from '@/utils/excelUtils';
+import { readOrders, readCustomers, Order, OrderItem, Customer, exportToExcel } from '@/utils/excelUtils';
 import Modal from '@/components/Modal';
 
 export default function Orders() {
@@ -8,6 +8,7 @@ export default function Orders() {
   const [loading, setLoading] = useState(true);
   const [filterMaterial, setFilterMaterial] = useState<string>('all');
   const [materials, setMaterials] = useState<string[]>([]);
+  const [expandedOrders, setExpandedOrders] = useState<Set<string>>(new Set());
   
   // Modal states
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -15,22 +16,18 @@ export default function Orders() {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [currentOrder, setCurrentOrder] = useState<Order | null>(null);
   
-  // Form state
+  // Form state for order-level fields
   const [formData, setFormData] = useState<Partial<Order>>({
     id: '',
     orderRef: '',
     date: '',
     customerId: '',
-    material: '',
-    pieceSize: '',
-    qty: 0,
-    unitSalePrice: 0,
-    totalSale: 0,
-    unitCost: 0,
-    totalCost: 0,
-    profit: 0,
+    items: [],
     notes: ''
   });
+
+  // State for line items being edited
+  const [lineItems, setLineItems] = useState<OrderItem[]>([]);
 
   useEffect(() => {
     const loadData = async () => {
@@ -40,9 +37,19 @@ export default function Orders() {
         setOrders(ordersData);
         setCustomers(customersData);
         
-        // Extract unique materials
-        const uniqueMaterials = Array.from(new Set(ordersData.map(row => row.material).filter(Boolean))) as string[];
-        setMaterials(uniqueMaterials);
+        // Extract unique materials from all order items
+        const uniqueMaterials = new Set<string>();
+        ordersData.forEach(order => {
+          if (order.items && order.items.length > 0) {
+            order.items.forEach(item => {
+              if (item.material) uniqueMaterials.add(item.material);
+            });
+          } else if (order.material) {
+            // Legacy single-item orders
+            uniqueMaterials.add(order.material);
+          }
+        });
+        setMaterials(Array.from(uniqueMaterials));
         
         setLoading(false);
       } catch (error) {
@@ -56,7 +63,12 @@ export default function Orders() {
 
   const filteredOrders = filterMaterial === 'all' 
     ? orders 
-    : orders.filter(row => row.material === filterMaterial);
+    : orders.filter(order => {
+        if (order.items && order.items.length > 0) {
+          return order.items.some(item => item.material === filterMaterial);
+        }
+        return order.material === filterMaterial;
+      });
 
   const getCustomerName = (customerId: string) => {
     const customer = customers.find(c => c.id === customerId);
@@ -71,22 +83,33 @@ export default function Orders() {
       orderRef: '',
       date: today,
       customerId: '',
-      material: '',
-      pieceSize: '',
-      qty: 0,
-      unitSalePrice: 0,
-      totalSale: 0,
-      unitCost: 0,
-      totalCost: 0,
-      profit: 0,
+      items: [],
       notes: ''
     });
+    setLineItems([{
+      id: `item-${Date.now()}`,
+      material: '',
+      length: 0,
+      width: 0,
+      qty: 0,
+      unitCost: 0,
+      unitSalePrice: 0
+    }]);
     setIsAddModalOpen(true);
   };
 
   const handleEdit = (order: Order) => {
     setCurrentOrder(order);
     setFormData({ ...order });
+    setLineItems(order.items && order.items.length > 0 ? [...order.items] : [{
+      id: `item-${Date.now()}`,
+      material: order.material || '',
+      length: order.pieceSize ? parseFloat(order.pieceSize.split('x')[0]) || 0 : 0,
+      width: order.pieceSize ? parseFloat(order.pieceSize.split('x')[1]) || 0 : 0,
+      qty: order.qty || 0,
+      unitCost: order.unitCost || 0,
+      unitSalePrice: order.unitSalePrice || 0
+    }]);
     setIsEditModalOpen(true);
   };
 
@@ -95,26 +118,74 @@ export default function Orders() {
     setIsDeleteModalOpen(true);
   };
 
-  const calculateTotals = (qty: number, unitCost: number, unitSalePrice: number) => {
-    const totalCost = qty * unitCost;
-    const totalSale = qty * unitSalePrice;
+  const calculateItemTotals = (item: OrderItem) => {
+    const totalCost = item.qty * (item.unitCost || 0);
+    const totalSale = item.qty * (item.unitSalePrice || 0);
     const profit = totalSale - totalCost;
     return { totalCost, totalSale, profit };
   };
 
+  const calculateOrderTotals = (items: OrderItem[]) => {
+    let totalCost = 0;
+    let totalSale = 0;
+    items.forEach(item => {
+      const itemTotals = calculateItemTotals(item);
+      totalCost += itemTotals.totalCost;
+      totalSale += itemTotals.totalSale;
+    });
+    const profit = totalSale - totalCost;
+    return { totalCost, totalSale, profit };
+  };
+
+  const addLineItem = () => {
+    setLineItems([...lineItems, {
+      id: `item-${Date.now()}`,
+      material: '',
+      length: 0,
+      width: 0,
+      qty: 0,
+      unitCost: 0,
+      unitSalePrice: 0
+    }]);
+  };
+
+  const removeLineItem = (index: number) => {
+    if (lineItems.length > 1) {
+      setLineItems(lineItems.filter((_, i) => i !== index));
+    }
+  };
+
+  const updateLineItem = (index: number, field: keyof OrderItem, value: any) => {
+    const updated = [...lineItems];
+    (updated[index] as any)[field] = value;
+    setLineItems(updated);
+  };
+
   const handleSaveAdd = () => {
-    if (!formData.id || !formData.orderRef || !formData.customerId || !formData.material) {
-      alert('Please fill in required fields (ID, Order Ref, Customer, Material)');
+    if (!formData.id || !formData.orderRef || !formData.customerId) {
+      alert('Please fill in required fields (ID, Order Ref, Customer)');
       return;
     }
 
-    const { totalCost, totalSale, profit } = calculateTotals(
-      formData.qty || 0,
-      formData.unitCost || 0,
-      formData.unitSalePrice || 0
-    );
+    if (lineItems.length === 0 || lineItems.some(item => !item.material || item.qty <= 0)) {
+      alert('Please add at least one valid line item with material and quantity');
+      return;
+    }
 
     const customerName = getCustomerName(formData.customerId || '');
+
+    // Calculate totals for each item and add to items array
+    const itemsWithTotals = lineItems.map(item => {
+      const totals = calculateItemTotals(item);
+      return {
+        ...item,
+        totalCost: totals.totalCost,
+        totalSale: totals.totalSale,
+        profit: totals.profit
+      };
+    });
+
+    const orderTotals = calculateOrderTotals(itemsWithTotals);
 
     const newOrder: Order = {
       id: formData.id!,
@@ -122,14 +193,10 @@ export default function Orders() {
       date: formData.date || new Date().toISOString().split('T')[0],
       customerId: formData.customerId!,
       customerName,
-      material: formData.material!,
-      pieceSize: formData.pieceSize || '',
-      qty: formData.qty || 0,
-      unitCost: formData.unitCost || 0,
-      unitSalePrice: formData.unitSalePrice || 0,
-      totalCost,
-      totalSale,
-      profit,
+      items: itemsWithTotals,
+      totalCost: orderTotals.totalCost,
+      totalSale: orderTotals.totalSale,
+      profit: orderTotals.profit,
       notes: formData.notes || ''
     };
 
@@ -138,21 +205,40 @@ export default function Orders() {
   };
 
   const handleSaveEdit = () => {
-    if (!formData.id || !formData.orderRef || !formData.customerId || !formData.material) {
-      alert('Please fill in required fields (ID, Order Ref, Customer, Material)');
+    if (!formData.id || !formData.orderRef || !formData.customerId) {
+      alert('Please fill in required fields (ID, Order Ref, Customer)');
       return;
     }
 
-    const { totalCost, totalSale, profit } = calculateTotals(
-      formData.qty || 0,
-      formData.unitCost || 0,
-      formData.unitSalePrice || 0
-    );
+    if (lineItems.length === 0 || lineItems.some(item => !item.material || item.qty <= 0)) {
+      alert('Please add at least one valid line item with material and quantity');
+      return;
+    }
 
     const customerName = getCustomerName(formData.customerId || '');
 
+    // Calculate totals for each item
+    const itemsWithTotals = lineItems.map(item => {
+      const totals = calculateItemTotals(item);
+      return {
+        ...item,
+        totalCost: totals.totalCost,
+        totalSale: totals.totalSale,
+        profit: totals.profit
+      };
+    });
+
+    const orderTotals = calculateOrderTotals(itemsWithTotals);
+
     const updatedOrders = orders.map(o =>
-      o.id === currentOrder?.id ? { ...formData as Order, totalCost, totalSale, profit, customerName } : o
+      o.id === currentOrder?.id ? {
+        ...formData as Order,
+        customerName,
+        items: itemsWithTotals,
+        totalCost: orderTotals.totalCost,
+        totalSale: orderTotals.totalSale,
+        profit: orderTotals.profit
+      } : o
     );
 
     setOrders(updatedOrders);
@@ -165,6 +251,16 @@ export default function Orders() {
       setIsDeleteModalOpen(false);
       setCurrentOrder(null);
     }
+  };
+
+  const toggleOrderExpansion = (orderId: string) => {
+    const newExpanded = new Set(expandedOrders);
+    if (newExpanded.has(orderId)) {
+      newExpanded.delete(orderId);
+    } else {
+      newExpanded.add(orderId);
+    }
+    setExpandedOrders(newExpanded);
   };
 
   const handleExport = () => {
@@ -257,9 +353,7 @@ export default function Orders() {
                   <th className="px-2 sm:px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Order Ref</th>
                   <th className="px-2 sm:px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
                   <th className="px-2 sm:px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Customer</th>
-                  <th className="px-2 sm:px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Material</th>
-                  <th className="px-2 sm:px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Size (mm)</th>
-                  <th className="px-2 sm:px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Qty</th>
+                  <th className="px-2 sm:px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Items</th>
                   <th className="px-2 sm:px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total Cost (₹)</th>
                   <th className="px-2 sm:px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total Sale (₹)</th>
                   <th className="px-2 sm:px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Profit (₹)</th>
@@ -269,43 +363,101 @@ export default function Orders() {
               <tbody className="bg-white divide-y divide-gray-200">
                 {filteredOrders.length === 0 ? (
                   <tr>
-                    <td colSpan={10} className="px-4 py-8 text-center text-gray-500">
+                    <td colSpan={8} className="px-4 py-8 text-center text-gray-500">
                       No orders found. {filterMaterial !== 'all' ? 'Try changing the filter or ' : ''}Click &quot;Add New Order&quot; to create one.
                     </td>
                   </tr>
                 ) : (
-                  filteredOrders.map((order) => (
-                    <tr key={order.id} className="hover:bg-gray-50">
-                      <td className="px-2 sm:px-4 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm font-medium text-blue-600">{order.orderRef}</td>
-                      <td className="px-2 sm:px-4 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-900">{order.date}</td>
-                      <td className="px-2 sm:px-4 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-900">
-                        {order.customerName || getCustomerName(order.customerId)}
-                        <div className="text-xs text-gray-500">{order.customerId}</div>
-                      </td>
-                      <td className="px-2 sm:px-4 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-900">{order.material}</td>
-                      <td className="px-2 sm:px-4 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-900">{order.pieceSize}</td>
-                      <td className="px-2 sm:px-4 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-900">{order.qty}</td>
-                      <td className="px-2 sm:px-4 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-900">₹{(order.totalCost || 0).toFixed(2)}</td>
-                      <td className="px-2 sm:px-4 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-900">₹{(order.totalSale || 0).toFixed(2)}</td>
-                      <td className="px-2 sm:px-4 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-green-600 font-medium">₹{(order.profit || 0).toFixed(2)}</td>
-                      <td className="px-2 sm:px-4 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm">
-                        <div className="flex gap-2">
-                          <button
-                            onClick={() => handleEdit(order)}
-                            className="text-blue-600 hover:text-blue-800 font-medium"
-                          >
-                            Edit
-                          </button>
-                          <button
-                            onClick={() => handleDelete(order)}
-                            className="text-red-600 hover:text-red-800 font-medium"
-                          >
-                            Delete
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))
+                  filteredOrders.map((order) => {
+                    const isExpanded = expandedOrders.has(order.id);
+                    const itemCount = order.items?.length || 0;
+                    
+                    return (
+                      <React.Fragment key={order.id}>
+                        <tr className="hover:bg-gray-50">
+                          <td className="px-2 sm:px-4 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm">
+                            <div className="flex items-center gap-2">
+                              {itemCount > 0 && (
+                                <button
+                                  onClick={() => toggleOrderExpansion(order.id)}
+                                  className="text-blue-600 hover:text-blue-800"
+                                >
+                                  {isExpanded ? '▼' : '▶'}
+                                </button>
+                              )}
+                              <span className="font-medium text-blue-600">{order.orderRef}</span>
+                            </div>
+                          </td>
+                          <td className="px-2 sm:px-4 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-900">{order.date}</td>
+                          <td className="px-2 sm:px-4 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-900">
+                            {order.customerName || getCustomerName(order.customerId)}
+                            <div className="text-xs text-gray-500">{order.customerId}</div>
+                          </td>
+                          <td className="px-2 sm:px-4 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-900">
+                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                              {itemCount} {itemCount === 1 ? 'item' : 'items'}
+                            </span>
+                          </td>
+                          <td className="px-2 sm:px-4 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-900">₹{(order.totalCost || 0).toFixed(2)}</td>
+                          <td className="px-2 sm:px-4 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-900">₹{(order.totalSale || 0).toFixed(2)}</td>
+                          <td className="px-2 sm:px-4 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-green-600 font-medium">₹{(order.profit || 0).toFixed(2)}</td>
+                          <td className="px-2 sm:px-4 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm">
+                            <div className="flex gap-2">
+                              <button
+                                onClick={() => handleEdit(order)}
+                                className="text-blue-600 hover:text-blue-800 font-medium"
+                              >
+                                Edit
+                              </button>
+                              <button
+                                onClick={() => handleDelete(order)}
+                                className="text-red-600 hover:text-red-800 font-medium"
+                              >
+                                Delete
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                        {isExpanded && order.items && order.items.length > 0 && (
+                          <tr>
+                            <td colSpan={8} className="px-2 sm:px-4 py-2 bg-gray-50">
+                              <div className="ml-8">
+                                <h4 className="text-sm font-medium text-gray-700 mb-2">Line Items:</h4>
+                                <table className="min-w-full divide-y divide-gray-200">
+                                  <thead className="bg-gray-100">
+                                    <tr>
+                                      <th className="px-2 py-2 text-left text-xs font-medium text-gray-500">#</th>
+                                      <th className="px-2 py-2 text-left text-xs font-medium text-gray-500">Material</th>
+                                      <th className="px-2 py-2 text-left text-xs font-medium text-gray-500">Dimensions (mm)</th>
+                                      <th className="px-2 py-2 text-left text-xs font-medium text-gray-500">Qty</th>
+                                      <th className="px-2 py-2 text-left text-xs font-medium text-gray-500">Unit Cost (₹)</th>
+                                      <th className="px-2 py-2 text-left text-xs font-medium text-gray-500">Unit Price (₹)</th>
+                                      <th className="px-2 py-2 text-left text-xs font-medium text-gray-500">Total (₹)</th>
+                                      <th className="px-2 py-2 text-left text-xs font-medium text-gray-500">Profit (₹)</th>
+                                    </tr>
+                                  </thead>
+                                  <tbody className="bg-white divide-y divide-gray-200">
+                                    {order.items.map((item, idx) => (
+                                      <tr key={item.id}>
+                                        <td className="px-2 py-2 text-xs text-gray-900">{idx + 1}</td>
+                                        <td className="px-2 py-2 text-xs text-gray-900">{item.material}</td>
+                                        <td className="px-2 py-2 text-xs text-gray-900">{item.length}×{item.width}</td>
+                                        <td className="px-2 py-2 text-xs text-gray-900">{item.qty}</td>
+                                        <td className="px-2 py-2 text-xs text-gray-900">₹{(item.unitCost || 0).toFixed(2)}</td>
+                                        <td className="px-2 py-2 text-xs text-gray-900">₹{(item.unitSalePrice || 0).toFixed(2)}</td>
+                                        <td className="px-2 py-2 text-xs text-gray-900">₹{(item.totalSale || 0).toFixed(2)}</td>
+                                        <td className="px-2 py-2 text-xs text-green-600">₹{(item.profit || 0).toFixed(2)}</td>
+                                      </tr>
+                                    ))}
+                                  </tbody>
+                                </table>
+                              </div>
+                            </td>
+                          </tr>
+                        )}
+                      </React.Fragment>
+                    );
+                  })
                 )}
               </tbody>
             </table>
@@ -329,7 +481,7 @@ export default function Orders() {
       </div>
 
       {/* Add Order Modal */}
-      <Modal isOpen={isAddModalOpen} onClose={() => setIsAddModalOpen(false)} title="Add New Order" maxWidth="2xl">
+      <Modal isOpen={isAddModalOpen} onClose={() => setIsAddModalOpen(false)} title="Add New Order" maxWidth="4xl">
         <div className="space-y-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             <div>
@@ -362,96 +514,161 @@ export default function Orders() {
               />
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Customer *</label>
-              <select
-                value={formData.customerId}
-                onChange={(e) => setFormData({ ...formData, customerId: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="">Select Customer</option>
-                {customers.map(customer => (
-                  <option key={customer.id} value={customer.id}>{customer.name}</option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Material *</label>
-              <input
-                type="text"
-                value={formData.material}
-                onChange={(e) => setFormData({ ...formData, material: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="e.g., Stainless Steel"
-              />
-            </div>
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Piece Size (mm)</label>
-              <input
-                type="text"
-                value={formData.pieceSize}
-                onChange={(e) => setFormData({ ...formData, pieceSize: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="e.g., 500x300 (in mm)"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Quantity</label>
-              <input
-                type="number"
-                value={formData.qty}
-                onChange={(e) => setFormData({ ...formData, qty: parseFloat(e.target.value) || 0 })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                min="0"
-              />
-            </div>
-          </div>
-          <div className="grid grid-cols-3 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Unit Cost (₹)</label>
-              <input
-                type="number"
-                value={formData.unitCost}
-                onChange={(e) => setFormData({ ...formData, unitCost: parseFloat(e.target.value) || 0 })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                min="0"
-                step="0.01"
-                placeholder="Enter cost in rupees"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Unit Sale Price (₹)</label>
-              <input
-                type="number"
-                value={formData.unitSalePrice}
-                onChange={(e) => setFormData({ ...formData, unitSalePrice: parseFloat(e.target.value) || 0 })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                min="0"
-                step="0.01"
-                placeholder="Enter price in rupees"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Profit (₹) (Auto-calculated)</label>
-              <input
-                type="number"
-                value={calculateTotals(formData.qty || 0, formData.unitCost || 0, formData.unitSalePrice || 0).profit}
-                readOnly
-                className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-100"
-              />
-            </div>
-          </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Notes</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Customer *</label>
+            <select
+              value={formData.customerId}
+              onChange={(e) => setFormData({ ...formData, customerId: e.target.value })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="">Select Customer</option>
+              {customers.map(customer => (
+                <option key={customer.id} value={customer.id}>{customer.name}</option>
+              ))}
+            </select>
+          </div>
+
+          {/* Line Items Section */}
+          <div className="border-t pt-4">
+            <div className="flex justify-between items-center mb-3">
+              <h3 className="text-lg font-medium text-gray-900">Line Items</h3>
+              <button
+                onClick={addLineItem}
+                className="px-3 py-1 bg-green-600 text-white rounded-md hover:bg-green-700 text-sm"
+              >
+                + Add Item
+              </button>
+            </div>
+            
+            <div className="space-y-4 max-h-96 overflow-y-auto">
+              {lineItems.map((item, index) => (
+                <div key={item.id} className="border rounded-lg p-4 bg-gray-50">
+                  <div className="flex justify-between items-start mb-3">
+                    <h4 className="text-sm font-medium text-gray-700">Item #{index + 1}</h4>
+                    {lineItems.length > 1 && (
+                      <button
+                        onClick={() => removeLineItem(index)}
+                        className="text-red-600 hover:text-red-800 text-sm font-medium"
+                      >
+                        Remove
+                      </button>
+                    )}
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                    <div className="lg:col-span-3">
+                      <label className="block text-xs font-medium text-gray-600 mb-1">Material *</label>
+                      <input
+                        type="text"
+                        value={item.material}
+                        onChange={(e) => updateLineItem(index, 'material', e.target.value)}
+                        className="w-full px-2 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="e.g., Aluminium Sheet, Stainless Steel"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-600 mb-1">Length (mm) *</label>
+                      <input
+                        type="number"
+                        value={item.length}
+                        onChange={(e) => updateLineItem(index, 'length', parseFloat(e.target.value) || 0)}
+                        className="w-full px-2 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        min="0"
+                        placeholder="500"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-600 mb-1">Width (mm) *</label>
+                      <input
+                        type="number"
+                        value={item.width}
+                        onChange={(e) => updateLineItem(index, 'width', parseFloat(e.target.value) || 0)}
+                        className="w-full px-2 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        min="0"
+                        placeholder="300"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-600 mb-1">Quantity *</label>
+                      <input
+                        type="number"
+                        value={item.qty}
+                        onChange={(e) => updateLineItem(index, 'qty', parseFloat(e.target.value) || 0)}
+                        className="w-full px-2 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        min="0"
+                        placeholder="10"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-600 mb-1">Unit Cost (₹)</label>
+                      <input
+                        type="number"
+                        value={item.unitCost}
+                        onChange={(e) => updateLineItem(index, 'unitCost', parseFloat(e.target.value) || 0)}
+                        className="w-full px-2 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        min="0"
+                        step="0.01"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-600 mb-1">Unit Price (₹)</label>
+                      <input
+                        type="number"
+                        value={item.unitSalePrice}
+                        onChange={(e) => updateLineItem(index, 'unitSalePrice', parseFloat(e.target.value) || 0)}
+                        className="w-full px-2 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        min="0"
+                        step="0.01"
+                      />
+                    </div>
+                    <div className="lg:col-span-3">
+                      <div className="grid grid-cols-3 gap-2 text-xs">
+                        <div>
+                          <span className="text-gray-600">Cost: </span>
+                          <span className="font-medium">₹{calculateItemTotals(item).totalCost.toFixed(2)}</span>
+                        </div>
+                        <div>
+                          <span className="text-gray-600">Sale: </span>
+                          <span className="font-medium">₹{calculateItemTotals(item).totalSale.toFixed(2)}</span>
+                        </div>
+                        <div>
+                          <span className="text-gray-600">Profit: </span>
+                          <span className="font-medium text-green-600">₹{calculateItemTotals(item).profit.toFixed(2)}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Order Totals */}
+            <div className="mt-4 p-4 bg-blue-50 rounded-lg">
+              <h4 className="text-sm font-medium text-gray-700 mb-2">Order Totals</h4>
+              <div className="grid grid-cols-3 gap-4 text-sm">
+                <div>
+                  <span className="text-gray-600">Total Cost: </span>
+                  <span className="font-bold text-orange-600">₹{calculateOrderTotals(lineItems).totalCost.toFixed(2)}</span>
+                </div>
+                <div>
+                  <span className="text-gray-600">Total Sale: </span>
+                  <span className="font-bold text-green-600">₹{calculateOrderTotals(lineItems).totalSale.toFixed(2)}</span>
+                </div>
+                <div>
+                  <span className="text-gray-600">Total Profit: </span>
+                  <span className="font-bold text-purple-600">₹{calculateOrderTotals(lineItems).profit.toFixed(2)}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Order Notes</label>
             <textarea
               value={formData.notes}
               onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              rows={3}
-              placeholder="Additional notes..."
+              rows={2}
+              placeholder="Additional notes for the entire order..."
             />
           </div>
           <div className="flex justify-end gap-2 mt-6">
@@ -472,7 +689,7 @@ export default function Orders() {
       </Modal>
 
       {/* Edit Order Modal */}
-      <Modal isOpen={isEditModalOpen} onClose={() => setIsEditModalOpen(false)} title="Edit Order" maxWidth="2xl">
+      <Modal isOpen={isEditModalOpen} onClose={() => setIsEditModalOpen(false)} title="Edit Order" maxWidth="4xl">
         <div className="space-y-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             <div>
@@ -503,93 +720,160 @@ export default function Orders() {
               />
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Customer *</label>
-              <select
-                value={formData.customerId}
-                onChange={(e) => setFormData({ ...formData, customerId: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                {customers.map(customer => (
-                  <option key={customer.id} value={customer.id}>{customer.name}</option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Material *</label>
-              <input
-                type="text"
-                value={formData.material}
-                onChange={(e) => setFormData({ ...formData, material: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Piece Size (mm)</label>
-              <input
-                type="text"
-                value={formData.pieceSize}
-                onChange={(e) => setFormData({ ...formData, pieceSize: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="e.g., 500x300 (in mm)"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Quantity</label>
-              <input
-                type="number"
-                value={formData.qty}
-                onChange={(e) => setFormData({ ...formData, qty: parseFloat(e.target.value) || 0 })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                min="0"
-              />
-            </div>
-          </div>
-          <div className="grid grid-cols-3 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Unit Cost (₹)</label>
-              <input
-                type="number"
-                value={formData.unitCost}
-                onChange={(e) => setFormData({ ...formData, unitCost: parseFloat(e.target.value) || 0 })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                min="0"
-                step="0.01"
-                placeholder="Enter cost in rupees"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Unit Sale Price (₹)</label>
-              <input
-                type="number"
-                value={formData.unitSalePrice}
-                onChange={(e) => setFormData({ ...formData, unitSalePrice: parseFloat(e.target.value) || 0 })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                min="0"
-                step="0.01"
-                placeholder="Enter price in rupees"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Profit (₹) (Auto-calculated)</label>
-              <input
-                type="number"
-                value={calculateTotals(formData.qty || 0, formData.unitCost || 0, formData.unitSalePrice || 0).profit}
-                readOnly
-                className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-100"
-              />
-            </div>
-          </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Notes</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Customer *</label>
+            <select
+              value={formData.customerId}
+              onChange={(e) => setFormData({ ...formData, customerId: e.target.value })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              {customers.map(customer => (
+                <option key={customer.id} value={customer.id}>{customer.name}</option>
+              ))}
+            </select>
+          </div>
+
+          {/* Line Items Section */}
+          <div className="border-t pt-4">
+            <div className="flex justify-between items-center mb-3">
+              <h3 className="text-lg font-medium text-gray-900">Line Items</h3>
+              <button
+                onClick={addLineItem}
+                className="px-3 py-1 bg-green-600 text-white rounded-md hover:bg-green-700 text-sm"
+              >
+                + Add Item
+              </button>
+            </div>
+            
+            <div className="space-y-4 max-h-96 overflow-y-auto">
+              {lineItems.map((item, index) => (
+                <div key={item.id} className="border rounded-lg p-4 bg-gray-50">
+                  <div className="flex justify-between items-start mb-3">
+                    <h4 className="text-sm font-medium text-gray-700">Item #{index + 1}</h4>
+                    {lineItems.length > 1 && (
+                      <button
+                        onClick={() => removeLineItem(index)}
+                        className="text-red-600 hover:text-red-800 text-sm font-medium"
+                      >
+                        Remove
+                      </button>
+                    )}
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                    <div className="lg:col-span-3">
+                      <label className="block text-xs font-medium text-gray-600 mb-1">Material *</label>
+                      <input
+                        type="text"
+                        value={item.material}
+                        onChange={(e) => updateLineItem(index, 'material', e.target.value)}
+                        className="w-full px-2 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="e.g., Aluminium Sheet, Stainless Steel"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-600 mb-1">Length (mm) *</label>
+                      <input
+                        type="number"
+                        value={item.length}
+                        onChange={(e) => updateLineItem(index, 'length', parseFloat(e.target.value) || 0)}
+                        className="w-full px-2 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        min="0"
+                        placeholder="500"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-600 mb-1">Width (mm) *</label>
+                      <input
+                        type="number"
+                        value={item.width}
+                        onChange={(e) => updateLineItem(index, 'width', parseFloat(e.target.value) || 0)}
+                        className="w-full px-2 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        min="0"
+                        placeholder="300"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-600 mb-1">Quantity *</label>
+                      <input
+                        type="number"
+                        value={item.qty}
+                        onChange={(e) => updateLineItem(index, 'qty', parseFloat(e.target.value) || 0)}
+                        className="w-full px-2 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        min="0"
+                        placeholder="10"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-600 mb-1">Unit Cost (₹)</label>
+                      <input
+                        type="number"
+                        value={item.unitCost}
+                        onChange={(e) => updateLineItem(index, 'unitCost', parseFloat(e.target.value) || 0)}
+                        className="w-full px-2 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        min="0"
+                        step="0.01"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-600 mb-1">Unit Price (₹)</label>
+                      <input
+                        type="number"
+                        value={item.unitSalePrice}
+                        onChange={(e) => updateLineItem(index, 'unitSalePrice', parseFloat(e.target.value) || 0)}
+                        className="w-full px-2 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        min="0"
+                        step="0.01"
+                      />
+                    </div>
+                    <div className="lg:col-span-3">
+                      <div className="grid grid-cols-3 gap-2 text-xs">
+                        <div>
+                          <span className="text-gray-600">Cost: </span>
+                          <span className="font-medium">₹{calculateItemTotals(item).totalCost.toFixed(2)}</span>
+                        </div>
+                        <div>
+                          <span className="text-gray-600">Sale: </span>
+                          <span className="font-medium">₹{calculateItemTotals(item).totalSale.toFixed(2)}</span>
+                        </div>
+                        <div>
+                          <span className="text-gray-600">Profit: </span>
+                          <span className="font-medium text-green-600">₹{calculateItemTotals(item).profit.toFixed(2)}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Order Totals */}
+            <div className="mt-4 p-4 bg-blue-50 rounded-lg">
+              <h4 className="text-sm font-medium text-gray-700 mb-2">Order Totals</h4>
+              <div className="grid grid-cols-3 gap-4 text-sm">
+                <div>
+                  <span className="text-gray-600">Total Cost: </span>
+                  <span className="font-bold text-orange-600">₹{calculateOrderTotals(lineItems).totalCost.toFixed(2)}</span>
+                </div>
+                <div>
+                  <span className="text-gray-600">Total Sale: </span>
+                  <span className="font-bold text-green-600">₹{calculateOrderTotals(lineItems).totalSale.toFixed(2)}</span>
+                </div>
+                <div>
+                  <span className="text-gray-600">Total Profit: </span>
+                  <span className="font-bold text-purple-600">₹{calculateOrderTotals(lineItems).profit.toFixed(2)}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Order Notes</label>
             <textarea
               value={formData.notes}
               onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              rows={3}
+              rows={2}
+              placeholder="Additional notes for the entire order..."
             />
           </div>
           <div className="flex justify-end gap-2 mt-6">

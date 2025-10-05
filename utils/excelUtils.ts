@@ -50,24 +50,41 @@ export interface StockSheet {
   notes?: string;
 }
 
+export interface OrderItem {
+  id: string; // Unique identifier for the line item
+  material: string; // Material type (e.g., "Aluminium Sheet", "Stainless Steel")
+  length: number; // Length in millimeters (mm)
+  width: number; // Width in millimeters (mm)
+  qty: number; // Quantity of pieces
+  unitCost?: number; // Cost per unit in Indian Rupees (₹)
+  unitSalePrice?: number; // Sale price per unit in Indian Rupees (₹)
+  totalCost?: number; // Total cost for this line item (₹)
+  totalSale?: number; // Total sale for this line item (₹)
+  profit?: number; // Profit for this line item (₹)
+  notes?: string; // Notes specific to this line item
+}
+
 export interface Order {
   id: string;
   orderRef: string;
   date: string;
   customerId: string;
   customerName?: string;
+  items: OrderItem[]; // Array of line items in this order
+  totalCost?: number; // Total cost across all items (₹)
+  totalSale?: number; // Total revenue across all items (₹)
+  profit?: number; // Total profit across all items (₹)
+  notes?: string; // Order-level notes
+  
+  // Legacy fields for backward compatibility (deprecated)
   sheetId?: string;
-  material: string;
-  pieceSize: string; // Dimensions in millimeters (e.g., "500x300")
-  qty: number;
+  material?: string;
+  pieceSize?: string; // Dimensions in millimeters (e.g., "500x300")
+  qty?: number;
   areaPerPiece?: number; // Area in square meters (m²)
   totalAreaUsed?: number; // Area in square meters (m²)
   unitCost?: number; // Cost in Indian Rupees (₹)
   unitSalePrice?: number; // Price in Indian Rupees (₹)
-  totalCost?: number; // Cost in Indian Rupees (₹)
-  totalSale?: number; // Revenue in Indian Rupees (₹)
-  profit?: number; // Profit in Indian Rupees (₹)
-  notes?: string;
 }
 
 export interface Leftover {
@@ -191,26 +208,81 @@ export const readStockSheets = async (filename: string): Promise<StockSheet[]> =
 /**
  * Map Excel row to Order interface
  * Converts Excel column names to Order interface field names
+ * Handles both legacy single-item format and new multi-item format
  */
 const mapExcelRowToOrder = (row: any): Order => {
+  // Check if this is a new multi-item order format
+  if (row.items && Array.isArray(row.items)) {
+    return {
+      id: row.id || row['Order Ref'] || '',
+      orderRef: row.orderRef || row['Order Ref'] || '',
+      date: row.date || row['Date'] || '',
+      customerId: row.customerId || row['Customer ID'] || '',
+      customerName: row.customerName || row['Customer'],
+      items: row.items,
+      totalCost: row.totalCost || row['Total Cost'],
+      totalSale: row.totalSale || row['Total Sale'],
+      profit: row.profit || row['Profit'],
+      notes: row.notes || row['Notes']
+    };
+  }
+  
+  // Legacy single-item format - convert to multi-item structure
+  const material = row['Material'] || row.material || '';
+  const pieceSize = row['Piece Size (mm)'] || row.pieceSize || '';
+  const qty = row['Qty'] || row.qty || 0;
+  const unitCost = row['Unit Cost'] || row.unitCost || 0;
+  const unitSalePrice = row['Unit Sale Price'] || row.unitSalePrice || 0;
+  
+  // Parse dimensions from pieceSize (e.g., "500x300")
+  let length = 0;
+  let width = 0;
+  if (pieceSize && typeof pieceSize === 'string') {
+    const parts = pieceSize.split('x');
+    if (parts.length === 2) {
+      length = parseFloat(parts[0]) || 0;
+      width = parseFloat(parts[1]) || 0;
+    }
+  }
+  
+  const totalCost = qty * unitCost;
+  const totalSale = qty * unitSalePrice;
+  const profit = totalSale - totalCost;
+  
+  // Create a single item for legacy orders
+  const items: OrderItem[] = material ? [{
+    id: `${row['Order Ref'] || row.id || ''}-item-1`,
+    material,
+    length,
+    width,
+    qty,
+    unitCost,
+    unitSalePrice,
+    totalCost,
+    totalSale,
+    profit
+  }] : [];
+  
   return {
     id: row['Order Ref'] || row.id || '',
     orderRef: row['Order Ref'] || row.orderRef || '',
     date: row['Date'] || row.date || '',
     customerId: row['Customer ID'] || row.customerId || '',
     customerName: row['Customer'] || row.customerName,
+    items,
+    totalCost: row['Total Cost'] || row.totalCost || (items.length > 0 ? totalCost : 0),
+    totalSale: row['Total Sale'] || row.totalSale || (items.length > 0 ? totalSale : 0),
+    profit: row['Profit'] || row.profit || (items.length > 0 ? profit : 0),
+    notes: row['Notes'] || row.notes,
+    // Keep legacy fields for backward compatibility
     sheetId: row['Sheet ID'] || row.sheetId,
-    material: row['Material'] || row.material || '',
-    pieceSize: row['Piece Size (mm)'] || row.pieceSize || '',
-    qty: row['Qty'] || row.qty || 0,
+    material,
+    pieceSize,
+    qty,
     areaPerPiece: row['Area per Piece (m²)'] || row.areaPerPiece,
     totalAreaUsed: row['Total Area Used (m²)'] || row.totalAreaUsed,
-    unitCost: row['Unit Cost'] || row.unitCost,
-    unitSalePrice: row['Unit Sale Price'] || row.unitSalePrice,
-    totalCost: row['Total Cost'] || row.totalCost,
-    totalSale: row['Total Sale'] || row.totalSale,
-    profit: row['Profit'] || row.profit,
-    notes: row['Notes'] || row.notes
+    unitCost,
+    unitSalePrice
   };
 };
 
@@ -373,7 +445,59 @@ export const exportToExcel = (
     }
 
     if (data.orders) {
-      const ordersSheet = XLSX.utils.json_to_sheet(data.orders);
+      // Flatten orders with items for Excel export
+      const flattenedOrders: any[] = [];
+      data.orders.forEach(order => {
+        if (order.items && order.items.length > 0) {
+          // Multi-item order - create one row per item
+          order.items.forEach((item, index) => {
+            flattenedOrders.push({
+              'Order ID': order.id,
+              'Order Ref': order.orderRef,
+              'Date': order.date,
+              'Customer ID': order.customerId,
+              'Customer': order.customerName,
+              'Item ID': item.id,
+              'Item #': index + 1,
+              'Material': item.material,
+              'Length (mm)': item.length,
+              'Width (mm)': item.width,
+              'Dimensions': `${item.length}x${item.width}`,
+              'Qty': item.qty,
+              'Unit Cost (₹)': item.unitCost || 0,
+              'Unit Sale Price (₹)': item.unitSalePrice || 0,
+              'Total Cost (₹)': item.totalCost || 0,
+              'Total Sale (₹)': item.totalSale || 0,
+              'Profit (₹)': item.profit || 0,
+              'Item Notes': item.notes || '',
+              'Order Total Cost (₹)': index === 0 ? order.totalCost : '',
+              'Order Total Sale (₹)': index === 0 ? order.totalSale : '',
+              'Order Profit (₹)': index === 0 ? order.profit : '',
+              'Order Notes': index === 0 ? order.notes : ''
+            });
+          });
+        } else {
+          // Legacy single-item order or empty order
+          flattenedOrders.push({
+            'Order ID': order.id,
+            'Order Ref': order.orderRef,
+            'Date': order.date,
+            'Customer ID': order.customerId,
+            'Customer': order.customerName,
+            'Material': order.material || '',
+            'Piece Size (mm)': order.pieceSize || '',
+            'Qty': order.qty || 0,
+            'Unit Cost (₹)': order.unitCost || 0,
+            'Unit Sale Price (₹)': order.unitSalePrice || 0,
+            'Total Cost (₹)': order.totalCost || 0,
+            'Total Sale (₹)': order.totalSale || 0,
+            'Profit (₹)': order.profit || 0,
+            'Notes': order.notes || ''
+          });
+        }
+      });
+      
+      const ordersSheet = XLSX.utils.json_to_sheet(flattenedOrders);
       XLSX.utils.book_append_sheet(workbook, ordersSheet, 'Orders');
     }
 
