@@ -261,26 +261,48 @@ Navigate to `/customers` to manage customer profiles:
 
 ### Managing Orders
 
-Navigate to `/orders` to manage customer orders:
+Navigate to `/orders` to manage customer orders with multi-item support:
 
 1. **Add New Order**: Click the "Add New Order" button
-   - Required fields: Order ID, Order Ref, Customer, and Material
-   - Optional fields: Date, Piece Size, Quantity, Unit Cost, Unit Sale Price, and Notes
-   - Profit is automatically calculated from (Quantity × Unit Sale Price) - (Quantity × Unit Cost)
+   - Required fields: Order ID, Order Ref, and Customer
+   - **Multi-Item Support**: Each order can contain multiple line items
+     - Click "+ Add Item" to add additional line items
+     - Each line item requires: Material, Length (mm), Width (mm), and Quantity
+     - Optional per item: Unit Cost (₹) and Unit Sale Price (₹)
+     - Click "Remove" to delete a line item (minimum 1 item required)
+   - **Automatic Calculations**:
+     - Item totals (cost, sale, profit) are calculated automatically for each line item
+     - Order totals aggregate across all line items
+   - Order-level notes can be added for the entire order
    - Click "Add Order" to save
 
-2. **Edit Order**: Click "Edit" next to any order in the table
-   - Modify any fields (ID is locked)
-   - Profit updates automatically
+2. **View Order Details**: 
+   - Orders display with total values and item count badge
+   - Click the expand button (▶) next to an order to view line items
+   - Expanded view shows detailed breakdown of each line item with:
+     - Material type
+     - Dimensions (length × width in mm)
+     - Quantity
+     - Unit cost and sale price
+     - Total cost, sale, and profit per item
+
+3. **Edit Order**: Click "Edit" next to any order in the table
+   - Modify order details and line items
+   - Add or remove line items as needed
+   - All totals update automatically
    - Click "Save Changes" to update
 
-3. **Delete Order**: Click "Delete" next to any order
+4. **Delete Order**: Click "Delete" next to any order
    - Confirm deletion in the popup modal
+   - This will delete the order and all its line items
 
-4. **Filter Orders**: Use the material filter dropdown to narrow down orders
+5. **Filter Orders**: Use the material filter dropdown to narrow down orders
+   - Filters orders containing items with the selected material
    - Summary cards update automatically to reflect filtered data
 
-5. **Export Data**: Click "Export to Excel" to download current order and customer data
+6. **Export Data**: Click "Export to Excel" to download current order and customer data
+   - Multi-item orders are exported with each line item as a separate row
+   - Order totals are included on the first item row for easy aggregation
 
 ### Excel Export Feature
 
@@ -322,8 +344,13 @@ The application uses TypeScript interfaces to define the data structure:
 - `Factory`: Supplier/factory profiles (id, name, location, contact, materials)
 - `Purchase`: Purchase records (id, date, factoryId, material, size, qty, cost, batchRef)
 - `StockSheet`: Stock inventory (id, purchaseId, factoryId, material, size, status)
-- `Order`: Order records (id, orderRef, customerId, sheetId, material, pieceSize, qty, cost, profit)
+- `Order`: Order records with multi-item support:
+  - Order-level: id, orderRef, date, customerId, items[], totalCost, totalSale, profit, notes
+  - Each item (OrderItem): id, material, length, width, qty, unitCost, unitSalePrice, totalCost, totalSale, profit, notes
+  - Legacy fields maintained for backward compatibility
 - `Leftover`: Leftover pieces (id, parentSheetId, purchaseId, factoryId, material, dimensions, area)
+
+**Multi-Item Orders**: Orders now support multiple line items, allowing a single customer order to include different materials, sizes, and quantities. The system automatically calculates totals at both item and order levels. Legacy single-item orders are automatically migrated to the new structure.
 
 ### Implementing Traceability
 
