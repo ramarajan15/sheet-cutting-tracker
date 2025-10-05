@@ -569,24 +569,38 @@ export default function Orders() {
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                     <div className="lg:col-span-3">
-                      <label className="block text-xs font-medium text-gray-600 mb-1">Material *</label>
-                      <input
-                        type="text"
-                        value={item.material}
-                        onChange={(e) => updateLineItem(index, 'material', e.target.value)}
+                      <label className="block text-xs font-medium text-gray-600 mb-1">Product *</label>
+                      <select
+                        value={item.productId}
+                        onChange={(e) => {
+                          const productId = e.target.value;
+                          const product = getProduct(productId);
+                          if (product) {
+                            updateLineItem(index, 'productId', productId);
+                            updateLineItem(index, 'productName', product.name);
+                            updateLineItem(index, 'length', product.length);
+                            updateLineItem(index, 'width', product.width);
+                            updateLineItem(index, 'unitCost', product.unitCost * product.area);
+                          } else {
+                            updateLineItem(index, 'productId', productId);
+                          }
+                        }}
                         className="w-full px-2 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        placeholder="e.g., Aluminium Sheet, Stainless Steel"
-                      />
+                      >
+                        <option value="">Select Product</option>
+                        {products.map(product => (
+                          <option key={product.id} value={product.id}>{product.name}</option>
+                        ))}
+                      </select>
                     </div>
                     <div>
                       <label className="block text-xs font-medium text-gray-600 mb-1">Length (mm) *</label>
                       <input
                         type="number"
                         value={item.length}
-                        onChange={(e) => updateLineItem(index, 'length', parseFloat(e.target.value) || 0)}
-                        className="w-full px-2 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        min="0"
-                        placeholder="500"
+                        readOnly
+                        className="w-full px-2 py-2 border border-gray-300 rounded-md text-sm bg-gray-100"
+                        placeholder="Auto-filled"
                       />
                     </div>
                     <div>
@@ -594,10 +608,9 @@ export default function Orders() {
                       <input
                         type="number"
                         value={item.width}
-                        onChange={(e) => updateLineItem(index, 'width', parseFloat(e.target.value) || 0)}
-                        className="w-full px-2 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        min="0"
-                        placeholder="300"
+                        readOnly
+                        className="w-full px-2 py-2 border border-gray-300 rounded-md text-sm bg-gray-100"
+                        placeholder="Auto-filled"
                       />
                     </div>
                     <div>
@@ -616,10 +629,9 @@ export default function Orders() {
                       <input
                         type="number"
                         value={item.unitCost}
-                        onChange={(e) => updateLineItem(index, 'unitCost', parseFloat(e.target.value) || 0)}
-                        className="w-full px-2 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        min="0"
-                        step="0.01"
+                        readOnly
+                        className="w-full px-2 py-2 border border-gray-300 rounded-md text-sm bg-gray-100"
+                        placeholder="Auto-filled"
                       />
                     </div>
                     <div>
@@ -774,24 +786,38 @@ export default function Orders() {
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                     <div className="lg:col-span-3">
-                      <label className="block text-xs font-medium text-gray-600 mb-1">Material *</label>
-                      <input
-                        type="text"
-                        value={item.material}
-                        onChange={(e) => updateLineItem(index, 'material', e.target.value)}
+                      <label className="block text-xs font-medium text-gray-600 mb-1">Product *</label>
+                      <select
+                        value={item.productId}
+                        onChange={(e) => {
+                          const productId = e.target.value;
+                          const product = getProduct(productId);
+                          if (product) {
+                            updateLineItem(index, 'productId', productId);
+                            updateLineItem(index, 'productName', product.name);
+                            updateLineItem(index, 'length', product.length);
+                            updateLineItem(index, 'width', product.width);
+                            updateLineItem(index, 'unitCost', product.unitCost * product.area);
+                          } else {
+                            updateLineItem(index, 'productId', productId);
+                          }
+                        }}
                         className="w-full px-2 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        placeholder="e.g., Aluminium Sheet, Stainless Steel"
-                      />
+                      >
+                        <option value="">Select Product</option>
+                        {products.map(product => (
+                          <option key={product.id} value={product.id}>{product.name}</option>
+                        ))}
+                      </select>
                     </div>
                     <div>
                       <label className="block text-xs font-medium text-gray-600 mb-1">Length (mm) *</label>
                       <input
                         type="number"
                         value={item.length}
-                        onChange={(e) => updateLineItem(index, 'length', parseFloat(e.target.value) || 0)}
-                        className="w-full px-2 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        min="0"
-                        placeholder="500"
+                        readOnly
+                        className="w-full px-2 py-2 border border-gray-300 rounded-md text-sm bg-gray-100"
+                        placeholder="Auto-filled"
                       />
                     </div>
                     <div>
@@ -799,10 +825,9 @@ export default function Orders() {
                       <input
                         type="number"
                         value={item.width}
-                        onChange={(e) => updateLineItem(index, 'width', parseFloat(e.target.value) || 0)}
-                        className="w-full px-2 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        min="0"
-                        placeholder="300"
+                        readOnly
+                        className="w-full px-2 py-2 border border-gray-300 rounded-md text-sm bg-gray-100"
+                        placeholder="Auto-filled"
                       />
                     </div>
                     <div>
@@ -821,10 +846,9 @@ export default function Orders() {
                       <input
                         type="number"
                         value={item.unitCost}
-                        onChange={(e) => updateLineItem(index, 'unitCost', parseFloat(e.target.value) || 0)}
-                        className="w-full px-2 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        min="0"
-                        step="0.01"
+                        readOnly
+                        className="w-full px-2 py-2 border border-gray-300 rounded-md text-sm bg-gray-100"
+                        placeholder="Auto-filled"
                       />
                     </div>
                     <div>
