@@ -17,3 +17,37 @@ body {
     )
     rgb(var(--background-start-rgb));
 }
+
+/* Responsive table utilities */
+@layer utilities {
+  .table-responsive {
+    @apply block overflow-x-auto -mx-4 sm:mx-0;
+  }
+  
+  .table-responsive table {
+    @apply min-w-full;
+  }
+}
+
+/* Mobile-friendly form layouts */
+@layer components {
+  .form-grid-responsive {
+    @apply grid grid-cols-1 sm:grid-cols-2 gap-4;
+  }
+  
+  .form-grid-responsive-3 {
+    @apply grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4;
+  }
+}
+
+/* Ensure touch targets are large enough on mobile */
+button, a, input[type="checkbox"], input[type="radio"] {
+  @apply touch-manipulation;
+}
+
+/* Improve readability on small screens */
+@media (max-width: 640px) {
+  .text-responsive-sm {
+    font-size: 0.875rem !important;
+  }
+}
