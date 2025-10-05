@@ -1,0 +1,5 @@
+Material,Date,Customer,Order Ref,Sheet Used (Y/N),Piece Size (mm),Qty,Area per Piece (m²),Total Area Used (m²),Unit Cost,Unit Sale Price,Total Cost,Total Sale,Profit,Leftover Area (m²),Offcut Used? (Y/N),Notes
+Plastic,2025-10-01,John Doe,ORD001,Y,1200x2400,10,2.88,28.8,100,150,1000,1500,500,3.2,N,First order
+Hylam,2025-10-02,Jane Smith,ORD002,N,1000x2000,5,2,10,80,120,400,600,200,6,Y,Used offcut
+Aluminium,2025-10-03,Acme Corp,ORD003,Y,1500x3000,6,4.5,27,200,270,1200,1620,420,2,N,Big order
+Plywood,2025-10-04,Beta Ltd,ORD004,Y,1220x2440,8,2.9768,23.8144,60,100,480,800,320,0,N,Standard cut
