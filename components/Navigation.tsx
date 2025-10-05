@@ -30,7 +30,7 @@ const Navigation: React.FC = () => {
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16">
           <Link href="/" className="text-xl font-bold" onClick={closeMobileMenu}>
-            Sheet Cutting Tracker
+            Excel Traders & Agencies
           </Link>
           
           {/* Desktop Navigation */}
