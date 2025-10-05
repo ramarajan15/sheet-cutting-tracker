@@ -8,14 +8,14 @@ const Navigation: React.FC = () => {
 
   const navLinks = [
     { href: '/dashboard', label: 'Dashboard' },
-    { href: '/stock', label: 'Stock' },
-    { href: '/orders', label: 'Orders' },
+    { href: '/stock', label: 'Stocks' },
     { href: '/leftovers', label: 'Leftovers' },
+    { href: '/orders', label: 'Orders' },
+    { href: '/purchases', label: 'Purchases' },
     { href: '/customers', label: 'Customers' },
     { href: '/factories', label: 'Factories' },
-    { href: '/purchases', label: 'Purchases' },
-    { href: '/categories', label: 'Categories' },
     { href: '/products', label: 'Products' },
+    { href: '/categories', label: 'Categories' },
     { href: '/visualizer', label: 'Visualizer' },
   ];
 

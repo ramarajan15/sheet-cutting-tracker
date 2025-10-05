@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import { readOrders, readCustomers, readProducts, Order, OrderItem, Customer, Product, exportToExcel } from '@/utils/excelUtils';
+import { readOrders, readCustomers, readProducts, readStockSheets, Order, OrderItem, Customer, Product, StockSheet, exportToExcel } from '@/utils/excelUtils';
 import Modal from '@/components/Modal';
 
 export default function Orders() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
+  const [stockSheets, setStockSheets] = useState<StockSheet[]>([]);
   const [loading, setLoading] = useState(true);
   const [filterProduct, setFilterProduct] = useState<string>('all');
   const [productsFilter, setProductsFilter] = useState<string[]>([]);
@@ -36,9 +37,11 @@ export default function Orders() {
         const ordersData = await readOrders('SheetCuttingBusinessTemplate.xlsx');
         const customersData = await readCustomers('SheetCuttingBusinessTemplate.xlsx');
         const productsData = await readProducts('SheetCuttingBusinessTemplate.xlsx');
+        const stockData = await readStockSheets('SheetCuttingBusinessTemplate.xlsx');
         setOrders(ordersData);
         setCustomers(customersData);
         setProducts(productsData);
+        setStockSheets(stockData);
         
         // Extract unique products from all order items
         const uniqueProducts = new Set<string>();
@@ -82,6 +85,21 @@ export default function Orders() {
 
   const getProduct = (productId: string) => {
     return products.find(p => p.id === productId);
+  };
+
+  const getStockInfo = (productId: string) => {
+    // Count stock sheets for this product
+    const productSheets = stockSheets.filter(sheet => sheet.productId === productId);
+    const availableSheets = productSheets.filter(sheet => sheet.status === 'available');
+    const leftoverSheets = productSheets.filter(sheet => sheet.status === 'leftover');
+    
+    return {
+      totalSheets: productSheets.length,
+      availableSheets: availableSheets.length,
+      leftoverSheets: leftoverSheets.length,
+      hasStock: productSheets.length > 0,
+      hasLeftovers: leftoverSheets.length > 0
+    };
   };
 
   // CRUD handlers
@@ -330,27 +348,15 @@ export default function Orders() {
       </div>
 
       {/* Summary Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-4 sm:mb-6">
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 mb-4 sm:mb-6">
         <div className="bg-white rounded-lg shadow-md p-3 sm:p-4">
           <h3 className="text-gray-600 text-xs sm:text-sm font-medium">Total Orders</h3>
           <p className="text-xl sm:text-2xl font-bold text-blue-600">{filteredOrders.length}</p>
         </div>
         <div className="bg-white rounded-lg shadow-md p-3 sm:p-4">
-          <h3 className="text-gray-600 text-xs sm:text-sm font-medium">Total Revenue (₹)</h3>
-          <p className="text-xl sm:text-2xl font-bold text-green-600">
-            ₹{filteredOrders.reduce((sum, row) => sum + (row.totalSale || 0), 0).toFixed(2)}
-          </p>
-        </div>
-        <div className="bg-white rounded-lg shadow-md p-3 sm:p-4">
           <h3 className="text-gray-600 text-xs sm:text-sm font-medium">Total Cost (₹)</h3>
           <p className="text-xl sm:text-2xl font-bold text-orange-600">
             ₹{filteredOrders.reduce((sum, row) => sum + (row.totalCost || 0), 0).toFixed(2)}
-          </p>
-        </div>
-        <div className="bg-white rounded-lg shadow-md p-3 sm:p-4">
-          <h3 className="text-gray-600 text-xs sm:text-sm font-medium">Total Profit (₹)</h3>
-          <p className="text-xl sm:text-2xl font-bold text-purple-600">
-            ₹{filteredOrders.reduce((sum, row) => sum + (row.profit || 0), 0).toFixed(2)}
           </p>
         </div>
       </div>
@@ -368,15 +374,13 @@ export default function Orders() {
                   <th className="px-2 sm:px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Customer</th>
                   <th className="px-2 sm:px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Items</th>
                   <th className="px-2 sm:px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total Cost (₹)</th>
-                  <th className="px-2 sm:px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total Sale (₹)</th>
-                  <th className="px-2 sm:px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Profit (₹)</th>
                   <th className="px-2 sm:px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
                 {filteredOrders.length === 0 ? (
                   <tr>
-                    <td colSpan={8} className="px-4 py-8 text-center text-gray-500">
+                    <td colSpan={6} className="px-4 py-8 text-center text-gray-500">
                       No orders found. {filterProduct !== 'all' ? 'Try changing the filter or ' : ''}Click &quot;Add New Order&quot; to create one.
                     </td>
                   </tr>
@@ -412,8 +416,6 @@ export default function Orders() {
                             </span>
                           </td>
                           <td className="px-2 sm:px-4 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-900">₹{(order.totalCost || 0).toFixed(2)}</td>
-                          <td className="px-2 sm:px-4 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-900">₹{(order.totalSale || 0).toFixed(2)}</td>
-                          <td className="px-2 sm:px-4 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-green-600 font-medium">₹{(order.profit || 0).toFixed(2)}</td>
                           <td className="px-2 sm:px-4 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm">
                             <div className="flex gap-2">
                               <button
@@ -433,7 +435,7 @@ export default function Orders() {
                         </tr>
                         {isExpanded && order.items && order.items.length > 0 && (
                           <tr>
-                            <td colSpan={8} className="px-2 sm:px-4 py-2 bg-gray-50">
+                            <td colSpan={6} className="px-2 sm:px-4 py-2 bg-gray-50">
                               <div className="ml-8">
                                 <h4 className="text-sm font-medium text-gray-700 mb-2">Line Items:</h4>
                                 <table className="min-w-full divide-y divide-gray-200">
@@ -444,9 +446,7 @@ export default function Orders() {
                                       <th className="px-2 py-2 text-left text-xs font-medium text-gray-500">Dimensions (mm)</th>
                                       <th className="px-2 py-2 text-left text-xs font-medium text-gray-500">Qty</th>
                                       <th className="px-2 py-2 text-left text-xs font-medium text-gray-500">Unit Cost (₹)</th>
-                                      <th className="px-2 py-2 text-left text-xs font-medium text-gray-500">Unit Price (₹)</th>
-                                      <th className="px-2 py-2 text-left text-xs font-medium text-gray-500">Total (₹)</th>
-                                      <th className="px-2 py-2 text-left text-xs font-medium text-gray-500">Profit (₹)</th>
+                                      <th className="px-2 py-2 text-left text-xs font-medium text-gray-500">Total Cost (₹)</th>
                                     </tr>
                                   </thead>
                                   <tbody className="bg-white divide-y divide-gray-200">
@@ -457,9 +457,7 @@ export default function Orders() {
                                         <td className="px-2 py-2 text-xs text-gray-900">{item.length}×{item.width}</td>
                                         <td className="px-2 py-2 text-xs text-gray-900">{item.qty}</td>
                                         <td className="px-2 py-2 text-xs text-gray-900">₹{(item.unitCost || 0).toFixed(2)}</td>
-                                        <td className="px-2 py-2 text-xs text-gray-900">₹{(item.unitSalePrice || 0).toFixed(2)}</td>
-                                        <td className="px-2 py-2 text-xs text-gray-900">₹{(item.totalSale || 0).toFixed(2)}</td>
-                                        <td className="px-2 py-2 text-xs text-green-600">₹{(item.profit || 0).toFixed(2)}</td>
+                                        <td className="px-2 py-2 text-xs text-gray-900">₹{(item.totalCost || 0).toFixed(2)}</td>
                                       </tr>
                                     ))}
                                   </tbody>
@@ -588,10 +586,50 @@ export default function Orders() {
                         className="w-full px-2 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                       >
                         <option value="">Select Product</option>
-                        {products.map(product => (
-                          <option key={product.id} value={product.id}>{product.name}</option>
-                        ))}
+                        {products.map(product => {
+                          const stockInfo = getStockInfo(product.id);
+                          return (
+                            <option key={product.id} value={product.id}>
+                              {product.name} {stockInfo.hasLeftovers ? '(Has Leftovers)' : stockInfo.hasStock ? '(In Stock)' : '(Out of Stock)'}
+                            </option>
+                          );
+                        })}
                       </select>
+                      {item.productId && (
+                        <div className="mt-1 text-xs">
+                          {(() => {
+                            const stockInfo = getStockInfo(item.productId);
+                            if (stockInfo.hasLeftovers) {
+                              return (
+                                <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-orange-100 text-orange-800">
+                                  <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                                  </svg>
+                                  {stockInfo.leftoverSheets} leftover piece(s) available
+                                </span>
+                              );
+                            } else if (stockInfo.hasStock) {
+                              return (
+                                <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
+                                  <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                                  </svg>
+                                  {stockInfo.availableSheets} uncut sheet(s) available
+                                </span>
+                              );
+                            } else {
+                              return (
+                                <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800">
+                                  <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                                  </svg>
+                                  Out of stock
+                                </span>
+                              );
+                            }
+                          })()}
+                        </div>
+                      )}
                     </div>
                     <div>
                       <label className="block text-xs font-medium text-gray-600 mb-1">Length (mm) *</label>
@@ -634,30 +672,12 @@ export default function Orders() {
                         placeholder="Auto-filled"
                       />
                     </div>
-                    <div>
-                      <label className="block text-xs font-medium text-gray-600 mb-1">Unit Price (₹)</label>
-                      <input
-                        type="number"
-                        value={item.unitSalePrice}
-                        onChange={(e) => updateLineItem(index, 'unitSalePrice', parseFloat(e.target.value) || 0)}
-                        className="w-full px-2 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        min="0"
-                        step="0.01"
-                      />
-                    </div>
+
                     <div className="lg:col-span-3">
-                      <div className="grid grid-cols-3 gap-2 text-xs">
+                      <div className="grid grid-cols-1 gap-2 text-xs">
                         <div>
-                          <span className="text-gray-600">Cost: </span>
+                          <span className="text-gray-600">Total Cost: </span>
                           <span className="font-medium">₹{calculateItemTotals(item).totalCost.toFixed(2)}</span>
-                        </div>
-                        <div>
-                          <span className="text-gray-600">Sale: </span>
-                          <span className="font-medium">₹{calculateItemTotals(item).totalSale.toFixed(2)}</span>
-                        </div>
-                        <div>
-                          <span className="text-gray-600">Profit: </span>
-                          <span className="font-medium text-green-600">₹{calculateItemTotals(item).profit.toFixed(2)}</span>
                         </div>
                       </div>
                     </div>
@@ -669,18 +689,10 @@ export default function Orders() {
             {/* Order Totals */}
             <div className="mt-4 p-4 bg-blue-50 rounded-lg">
               <h4 className="text-sm font-medium text-gray-700 mb-2">Order Totals</h4>
-              <div className="grid grid-cols-3 gap-4 text-sm">
+              <div className="grid grid-cols-1 gap-4 text-sm">
                 <div>
                   <span className="text-gray-600">Total Cost: </span>
                   <span className="font-bold text-orange-600">₹{calculateOrderTotals(lineItems).totalCost.toFixed(2)}</span>
-                </div>
-                <div>
-                  <span className="text-gray-600">Total Sale: </span>
-                  <span className="font-bold text-green-600">₹{calculateOrderTotals(lineItems).totalSale.toFixed(2)}</span>
-                </div>
-                <div>
-                  <span className="text-gray-600">Total Profit: </span>
-                  <span className="font-bold text-purple-600">₹{calculateOrderTotals(lineItems).profit.toFixed(2)}</span>
                 </div>
               </div>
             </div>
@@ -805,10 +817,50 @@ export default function Orders() {
                         className="w-full px-2 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                       >
                         <option value="">Select Product</option>
-                        {products.map(product => (
-                          <option key={product.id} value={product.id}>{product.name}</option>
-                        ))}
+                        {products.map(product => {
+                          const stockInfo = getStockInfo(product.id);
+                          return (
+                            <option key={product.id} value={product.id}>
+                              {product.name} {stockInfo.hasLeftovers ? '(Has Leftovers)' : stockInfo.hasStock ? '(In Stock)' : '(Out of Stock)'}
+                            </option>
+                          );
+                        })}
                       </select>
+                      {item.productId && (
+                        <div className="mt-1 text-xs">
+                          {(() => {
+                            const stockInfo = getStockInfo(item.productId);
+                            if (stockInfo.hasLeftovers) {
+                              return (
+                                <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-orange-100 text-orange-800">
+                                  <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                                  </svg>
+                                  {stockInfo.leftoverSheets} leftover piece(s) available
+                                </span>
+                              );
+                            } else if (stockInfo.hasStock) {
+                              return (
+                                <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
+                                  <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                                  </svg>
+                                  {stockInfo.availableSheets} uncut sheet(s) available
+                                </span>
+                              );
+                            } else {
+                              return (
+                                <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800">
+                                  <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                                  </svg>
+                                  Out of stock
+                                </span>
+                              );
+                            }
+                          })()}
+                        </div>
+                      )}
                     </div>
                     <div>
                       <label className="block text-xs font-medium text-gray-600 mb-1">Length (mm) *</label>
@@ -851,30 +903,12 @@ export default function Orders() {
                         placeholder="Auto-filled"
                       />
                     </div>
-                    <div>
-                      <label className="block text-xs font-medium text-gray-600 mb-1">Unit Price (₹)</label>
-                      <input
-                        type="number"
-                        value={item.unitSalePrice}
-                        onChange={(e) => updateLineItem(index, 'unitSalePrice', parseFloat(e.target.value) || 0)}
-                        className="w-full px-2 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        min="0"
-                        step="0.01"
-                      />
-                    </div>
+
                     <div className="lg:col-span-3">
-                      <div className="grid grid-cols-3 gap-2 text-xs">
+                      <div className="grid grid-cols-1 gap-2 text-xs">
                         <div>
-                          <span className="text-gray-600">Cost: </span>
+                          <span className="text-gray-600">Total Cost: </span>
                           <span className="font-medium">₹{calculateItemTotals(item).totalCost.toFixed(2)}</span>
-                        </div>
-                        <div>
-                          <span className="text-gray-600">Sale: </span>
-                          <span className="font-medium">₹{calculateItemTotals(item).totalSale.toFixed(2)}</span>
-                        </div>
-                        <div>
-                          <span className="text-gray-600">Profit: </span>
-                          <span className="font-medium text-green-600">₹{calculateItemTotals(item).profit.toFixed(2)}</span>
                         </div>
                       </div>
                     </div>
@@ -886,18 +920,10 @@ export default function Orders() {
             {/* Order Totals */}
             <div className="mt-4 p-4 bg-blue-50 rounded-lg">
               <h4 className="text-sm font-medium text-gray-700 mb-2">Order Totals</h4>
-              <div className="grid grid-cols-3 gap-4 text-sm">
+              <div className="grid grid-cols-1 gap-4 text-sm">
                 <div>
                   <span className="text-gray-600">Total Cost: </span>
                   <span className="font-bold text-orange-600">₹{calculateOrderTotals(lineItems).totalCost.toFixed(2)}</span>
-                </div>
-                <div>
-                  <span className="text-gray-600">Total Sale: </span>
-                  <span className="font-bold text-green-600">₹{calculateOrderTotals(lineItems).totalSale.toFixed(2)}</span>
-                </div>
-                <div>
-                  <span className="text-gray-600">Total Profit: </span>
-                  <span className="font-bold text-purple-600">₹{calculateOrderTotals(lineItems).profit.toFixed(2)}</span>
                 </div>
               </div>
             </div>
