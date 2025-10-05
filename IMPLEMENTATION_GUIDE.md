@@ -4,6 +4,20 @@
 
 This Next.js TypeScript application provides complete end-to-end material traceability for sheet cutting operations, from factory purchase to customer order fulfillment.
 
+### Units and Measurements
+
+The application uses consistent units throughout:
+
+- **Dimensions**: All length, width, breadth, size, and thickness measurements are in **millimeters (mm)**
+- **Currency**: All cost, price, and profit values are in **Indian Rupees (₹)**
+
+These units are clearly indicated in:
+- Form input labels and placeholders
+- Table headers
+- Display values
+- Excel export data
+- API interfaces and TypeScript types
+
 ## Architecture
 
 ### Data Flow

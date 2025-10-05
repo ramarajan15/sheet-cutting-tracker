@@ -27,11 +27,11 @@ export interface Purchase {
   factoryId: string;
   factoryName?: string;
   material: string;
-  size: string; // e.g., "2440x1220"
-  thickness?: string;
+  size: string; // Dimensions in millimeters (mm), e.g., "2440x1220"
+  thickness?: string; // Thickness in millimeters (mm)
   qty: number;
-  unitCost: number;
-  totalCost: number;
+  unitCost: number; // Cost in Indian Rupees (₹)
+  totalCost: number; // Cost in Indian Rupees (₹)
   batchRef?: string;
   notes?: string;
 }
@@ -41,8 +41,8 @@ export interface StockSheet {
   purchaseId: string;
   factoryId: string;
   material: string;
-  size: string;
-  thickness?: string;
+  size: string; // Dimensions in millimeters (mm)
+  thickness?: string; // Thickness in millimeters (mm)
   dateReceived: string;
   batchRef?: string;
   status: 'available' | 'in-use' | 'used' | 'leftover';
@@ -57,15 +57,15 @@ export interface Order {
   customerName?: string;
   sheetId?: string;
   material: string;
-  pieceSize: string;
+  pieceSize: string; // Dimensions in millimeters (mm)
   qty: number;
   areaPerPiece?: number;
   totalAreaUsed?: number;
-  unitCost?: number;
-  unitSalePrice?: number;
-  totalCost?: number;
-  totalSale?: number;
-  profit?: number;
+  unitCost?: number; // Cost in Indian Rupees (₹)
+  unitSalePrice?: number; // Price in Indian Rupees (₹)
+  totalCost?: number; // Cost in Indian Rupees (₹)
+  totalSale?: number; // Revenue in Indian Rupees (₹)
+  profit?: number; // Profit in Indian Rupees (₹)
   notes?: string;
 }
 
@@ -75,9 +75,9 @@ export interface Leftover {
   purchaseId?: string;
   factoryId?: string;
   material: string;
-  length: number;
-  width: number;
-  thickness?: string;
+  length: number; // Length in millimeters (mm)
+  width: number; // Width in millimeters (mm)
+  thickness?: string; // Thickness in millimeters (mm)
   area: number;
   dateCreated: string;
   fromOrderRef?: string;

@@ -16,6 +16,15 @@ A Next.js web application for managing and tracking sheet cutting operations for
 - **CRUD Operations**: Create, Read, Update, and Delete functionality for Factories, Purchases, Customers, and Orders
 - **Excel Export**: Export all data to Excel file for offline use and backup
 
+## Units and Measurements
+
+This application uses consistent units throughout:
+
+- **Dimensions**: All length, width, breadth, and size measurements are in **millimeters (mm)**
+- **Currency**: All cost, price, and profit values are in **Indian Rupees (₹)**
+
+These units are clearly indicated in all forms, tables, and UI labels throughout the application.
+
 ## Technology Stack
 
 - **Next.js 14**: React framework for production
@@ -160,7 +169,7 @@ Navigate to `/purchases` to manage incoming stock purchases:
 
 1. **Add New Purchase**: Click the "Add New Purchase" button
    - Required fields: Purchase ID, Factory, and Material
-   - Optional fields: Date, Size, Thickness, Quantity, Unit Cost, Batch Reference, and Notes
+   - Optional fields: Date, Size (in mm), Thickness (in mm), Quantity, Unit Cost (in ₹), Batch Reference, and Notes
    - Total Cost is automatically calculated from Quantity × Unit Cost
    - Click "Add Purchase" to save
 
@@ -200,7 +209,7 @@ Navigate to `/orders` to manage customer orders:
 
 1. **Add New Order**: Click the "Add New Order" button
    - Required fields: Order ID, Order Ref, Customer, and Material
-   - Optional fields: Date, Piece Size, Quantity, Unit Cost, Unit Sale Price, and Notes
+   - Optional fields: Date, Piece Size (in mm), Quantity, Unit Cost (in ₹), Unit Sale Price (in ₹), and Notes
    - Profit is automatically calculated from (Quantity × Unit Sale Price) - (Quantity × Unit Cost)
    - Click "Add Order" to save
 
@@ -255,10 +264,10 @@ The application uses TypeScript interfaces to define the data structure:
 
 - `Customer`: Customer profiles (id, name, email, phone, address, notes)
 - `Factory`: Supplier/factory profiles (id, name, location, contact, materials)
-- `Purchase`: Purchase records (id, date, factoryId, material, size, qty, cost, batchRef)
-- `StockSheet`: Stock inventory (id, purchaseId, factoryId, material, size, status)
-- `Order`: Order records (id, orderRef, customerId, sheetId, material, pieceSize, qty, cost, profit)
-- `Leftover`: Leftover pieces (id, parentSheetId, purchaseId, factoryId, material, dimensions, area)
+- `Purchase`: Purchase records (id, date, factoryId, material, size in mm, qty, cost in ₹, batchRef)
+- `StockSheet`: Stock inventory (id, purchaseId, factoryId, material, size in mm, status)
+- `Order`: Order records (id, orderRef, customerId, sheetId, material, pieceSize in mm, qty, cost in ₹, profit in ₹)
+- `Leftover`: Leftover pieces (id, parentSheetId, purchaseId, factoryId, material, dimensions in mm, area)
 
 ### Implementing Traceability
 
