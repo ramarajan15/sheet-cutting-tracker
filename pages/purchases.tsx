@@ -438,7 +438,7 @@ export default function Purchases() {
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Unit Cost</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Unit Cost (₹)</label>
               <input
                 type="number"
                 value={formData.unitCost}
@@ -446,10 +446,11 @@ export default function Purchases() {
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 min="0"
                 step="0.01"
+                placeholder="Enter cost in ₹"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Total Cost (Auto-calculated)</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Total Cost (₹) (Auto-calculated)</label>
               <input
                 type="number"
                 value={calculateTotalCost(formData.qty || 0, formData.unitCost || 0)}
