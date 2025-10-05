@@ -1,9 +1,23 @@
 # Sheet Cutting Tracker
 
-A Next.js web application for managing and tracking sheet cutting operations for your business.
+A Next.js web application for managing and tracking sheet cutting operations for your business, featuring an enriched home page inspired by hylamsheets.com showcasing Hylam Sheets products and business tracking capabilities.
 
 ## Features
 
+### Enriched Home Page
+- **Hero Section**: Eye-catching gradient banner highlighting Hylam Sheets premium laminate solutions
+- **Company Introduction**: About Hylam Sheets with trust markers (50+ years experience, 500+ designs, 100% quality assured)
+- **Product Showcase**: Three main product categories with visuals:
+  - Decorative Laminates
+  - Industrial Laminates
+  - Compact Laminates
+- **Applications**: Real-world use cases across furniture, interior design, and commercial spaces
+- **Features Section**: Key benefits including premium quality, timely delivery, custom solutions, and expert support
+- **Business Tracking Hub**: Prominent navigation to all business management features
+- **Trust Markers**: ISO certification, 5000+ clients, 24/7 support, pan-India delivery
+- **Modern Design**: Fully responsive layout with clean aesthetics inspired by hylamsheets.com
+
+### Business Management Tools
 - **Dashboard**: View summary statistics and charts for your sheet cutting operations
 - **Stock Management**: Track material inventory and usage with purchase and factory traceability
 - **Orders Management**: Manage customer orders and cutting jobs with sheet-to-factory traceability
@@ -103,7 +117,7 @@ npm run dev
 ```
 sheet-cutting-tracker/
 ├── pages/                 # Next.js pages
-│   ├── index.tsx         # Home page
+│   ├── index.tsx         # Enriched home page with Hylam Sheets showcase
 │   ├── dashboard.tsx     # Dashboard with charts
 │   ├── stock.tsx         # Stock management
 │   ├── orders.tsx        # Orders management
@@ -113,11 +127,19 @@ sheet-cutting-tracker/
 │   ├── purchases.tsx     # Purchase management
 │   └── visualizer.tsx    # Sheet cutting visualizer
 ├── components/           # React components
-│   ├── Layout.tsx        # Main layout wrapper
+│   ├── Layout.tsx        # Main layout wrapper with home page special handling
 │   └── Navigation.tsx    # Navigation menu
 ├── utils/                # Utility functions
 │   └── excelUtils.ts     # Excel file operations and data interfaces
 ├── public/               # Static files
+│   ├── images/           # Product and application images
+│   │   ├── hylam-sheet-hero.svg
+│   │   ├── product-decorative.svg
+│   │   ├── product-industrial.svg
+│   │   ├── product-compact.svg
+│   │   ├── application-furniture.svg
+│   │   ├── application-interior.svg
+│   │   └── application-commercial.svg
 │   └── SheetCuttingBusinessTemplate.xlsx  # Data file
 └── styles/               # CSS styles
     └── globals.css       # Global styles
@@ -148,6 +170,31 @@ vercel
 5. Click "Deploy"
 
 Vercel will automatically detect Next.js and configure the build settings.
+
+## Home Page Design
+
+The home page has been enriched to showcase Hylam Sheets products and services while maintaining easy access to business tracking features. The design is inspired by hylamsheets.com and includes:
+
+### Page Sections
+
+1. **Hero Banner**: Full-width gradient section with compelling headline and primary CTAs
+2. **Company Introduction**: Statistics and trust markers (50+ years, 500+ designs, 100% quality)
+3. **Product Showcase**: Three main product categories with images and features
+4. **Applications**: Real-world use cases with visual representations
+5. **Why Choose Hylam**: Four key value propositions with icons
+6. **Business Tracking Hub**: Complete navigation grid to all management features
+7. **Trust Markers**: ISO certification, client count, support availability, delivery coverage
+8. **Call to Action**: Final CTA section encouraging users to access the dashboard
+
+### Design Principles
+
+- **Modern & Clean**: Contemporary design with gradient backgrounds and card-based layouts
+- **Fully Responsive**: Mobile-first design that adapts seamlessly to all screen sizes
+- **Visual Hierarchy**: Clear content organization guiding users from products to business tools
+- **Prominent Navigation**: Business tracking features are highly visible and accessible
+- **No Contact Forms/Testimonials**: Focus on product information and business tools as requested
+
+The home page uses SVG placeholder images stored in `/public/images/` for products and applications. These can be replaced with actual product photography as needed.
 
 ## Using CRUD Features
 
