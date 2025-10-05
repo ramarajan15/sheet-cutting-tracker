@@ -22,6 +22,24 @@ export interface Factory {
   notes?: string;
 }
 
+export interface Category {
+  id: string;
+  name: string;
+  description?: string;
+}
+
+export interface Product {
+  id: string;
+  name: string;
+  categoryId: string;
+  categoryName?: string;
+  length: number; // Length in millimeters (mm)
+  width: number; // Width in millimeters (mm)
+  thickness?: string;
+  unitPrice: number; // Price in Indian Rupees (₹)
+  notes?: string;
+}
+
 export interface Purchase {
   id: string;
   date: string;
@@ -189,6 +207,20 @@ export const readCustomers = async (filename: string): Promise<Customer[]> => {
  */
 export const readFactories = async (filename: string): Promise<Factory[]> => {
   return readExcelSheet<Factory>(filename, 'Factories');
+};
+
+/**
+ * Read categories from Excel file
+ */
+export const readCategories = async (filename: string): Promise<Category[]> => {
+  return readExcelSheet<Category>(filename, 'Categories');
+};
+
+/**
+ * Read products from Excel file
+ */
+export const readProducts = async (filename: string): Promise<Product[]> => {
+  return readExcelSheet<Product>(filename, 'Products');
 };
 
 /**
@@ -420,6 +452,8 @@ export const exportToExcel = (
   data: {
     customers?: Customer[];
     factories?: Factory[];
+    categories?: Category[];
+    products?: Product[];
     purchases?: Purchase[];
     orders?: Order[];
     stock?: StockSheet[];
@@ -437,6 +471,16 @@ export const exportToExcel = (
     if (data.factories) {
       const factoriesSheet = XLSX.utils.json_to_sheet(data.factories);
       XLSX.utils.book_append_sheet(workbook, factoriesSheet, 'Factories');
+    }
+
+    if (data.categories) {
+      const categoriesSheet = XLSX.utils.json_to_sheet(data.categories);
+      XLSX.utils.book_append_sheet(workbook, categoriesSheet, 'Categories');
+    }
+
+    if (data.products) {
+      const productsSheet = XLSX.utils.json_to_sheet(data.products);
+      XLSX.utils.book_append_sheet(workbook, productsSheet, 'Products');
     }
 
     if (data.purchases) {

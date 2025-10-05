@@ -8,6 +8,7 @@ const Navigation: React.FC = () => {
 
   const navLinks = [
     { href: '/dashboard', label: 'Dashboard' },
+    { href: '/products', label: 'Products' },
     { href: '/stock', label: 'Stock' },
     { href: '/orders', label: 'Orders' },
     { href: '/leftovers', label: 'Leftovers' },
