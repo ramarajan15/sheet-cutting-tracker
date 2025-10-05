@@ -453,19 +453,24 @@ To update the data in the Excel template:
 
 ### Regenerating Sample Data
 
-A script is provided to regenerate the sample Excel data with multiple sheets:
+A comprehensive script is provided to regenerate the sample Excel data with multiple sheets:
 
 ```bash
-node scripts/generate-sample-data.js
+node scripts/add-sample-data.js
 ```
 
-This will create a new Excel file with sample data for:
-- Customers (3 sample customers)
-- Factories (3 sample factories/suppliers)
-- Purchases (3 sample purchases)
-- Orders (4 sample orders with traceability)
+This will create/update the Excel file with comprehensive sample data including:
+- **Categories (10)**: Decorative Laminates, Industrial Laminates, Compact Laminates, Wood Finish Laminates, Solid Color Laminates, Plywood, Hylam Sheets, Mica Sheets, Aluminium Sheets, Teflon Sheets
+- **Products (16)**: Including plywoods, hylam sheets, mica sheets, aluminium sheets, and teflon sheets with complete specifications
+- **Customers (4)**: Sample customers with different business types
+- **Factories (5)**: Suppliers for different material types
+- **Purchases (7)**: Sample purchases from various factories with batch tracking
+- **Stock (10)**: Stock items linked to purchases for traceability
+- **Orders (5)**: Sample orders demonstrating product usage and customer relationships
 
-You can modify the script to customize the sample data for your needs.
+The sample data demonstrates realistic business scenarios with full end-to-end traceability from factory to customer.
+
+You can modify the script to customize the sample data for your specific needs.
 
 ## Contributing
 
