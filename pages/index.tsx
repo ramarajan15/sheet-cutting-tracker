@@ -20,6 +20,9 @@ export default function Home() {
           <li><strong>Stock:</strong> Manage your sheet material inventory</li>
           <li><strong>Orders:</strong> Track customer orders and cutting jobs</li>
           <li><strong>Leftovers:</strong> Manage leftover and offcut pieces</li>
+          <li><strong>Customers:</strong> Customer profiles with full order history</li>
+          <li><strong>Factories:</strong> Supplier/factory profiles and materials supplied</li>
+          <li><strong>Purchases:</strong> Incoming stock tracking with complete traceability</li>
           <li><strong>Visualizer:</strong> Visualize sheet cutting layouts</li>
         </ul>
       </div>

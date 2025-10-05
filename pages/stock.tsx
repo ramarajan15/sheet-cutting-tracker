@@ -51,7 +51,7 @@ export default function Stock() {
       </div>
 
       <div className="bg-white rounded-lg shadow-md p-6">
-        <h2 className="text-xl font-bold mb-4">Stock Details</h2>
+        <h2 className="text-xl font-bold mb-4">Stock Details with Traceability</h2>
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
@@ -61,6 +61,8 @@ export default function Stock() {
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Piece Size</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Quantity</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Area Used</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Factory</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Batch Ref</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Leftover</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Sheet Used</th>
               </tr>
@@ -73,6 +75,19 @@ export default function Stock() {
                   <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">{row['Piece Size (mm)']}</td>
                   <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">{row.Qty}</td>
                   <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">{row['Total Area Used (m²)']?.toFixed(2)} m²</td>
+                  <td className="px-4 py-4 text-sm text-gray-900">
+                    {row['Factory Name'] ? (
+                      <div>
+                        <div className="font-medium">{row['Factory Name']}</div>
+                        <div className="text-xs text-gray-500">{row['Factory ID']}</div>
+                      </div>
+                    ) : (
+                      <span className="text-gray-400">-</span>
+                    )}
+                  </td>
+                  <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {row['Batch Ref'] || '-'}
+                  </td>
                   <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">{row['Leftover Area (m²)']?.toFixed(2)} m²</td>
                   <td className="px-4 py-4 whitespace-nowrap text-sm">
                     <span className={`px-2 py-1 rounded-full text-xs ${row['Sheet Used (Y/N)'] === 'Y' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
@@ -95,7 +110,7 @@ export default function Stock() {
           </div>
           <div className="ml-3">
             <p className="text-sm text-blue-700">
-              This page displays stock information from the Excel file. Use this to track material usage and availability.
+              This page displays stock information with full traceability from the Excel file. Each sheet is tracked by dimensions, cost, purchase batch/factory for complete supply chain visibility.
             </p>
           </div>
         </div>

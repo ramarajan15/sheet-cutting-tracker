@@ -67,11 +67,12 @@ export default function Leftovers() {
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Material</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Customer</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Parent Sheet</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Factory</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Piece Size</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Area Used</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Leftover Area</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Offcut Used?</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Notes</th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
@@ -81,6 +82,19 @@ export default function Leftovers() {
                   <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">{row.Date}</td>
                   <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">{row.Material}</td>
                   <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">{row.Customer}</td>
+                  <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {row['Sheet ID'] || '-'}
+                  </td>
+                  <td className="px-4 py-4 text-sm text-gray-900">
+                    {row['Factory Name'] ? (
+                      <div>
+                        <div className="font-medium">{row['Factory Name']}</div>
+                        <div className="text-xs text-gray-500">{row['Factory ID']}</div>
+                      </div>
+                    ) : (
+                      <span className="text-gray-400">-</span>
+                    )}
+                  </td>
                   <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">{row['Piece Size (mm)']}</td>
                   <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">{row['Total Area Used (m²)']?.toFixed(2)} m²</td>
                   <td className="px-4 py-4 whitespace-nowrap text-sm font-medium text-orange-600">
@@ -95,7 +109,6 @@ export default function Leftovers() {
                       {row['Offcut Used? (Y/N)']}
                     </span>
                   </td>
-                  <td className="px-4 py-4 text-sm text-gray-500 max-w-xs truncate">{row.Notes}</td>
                 </tr>
               ))}
             </tbody>
@@ -115,10 +128,11 @@ export default function Leftovers() {
             <h3 className="text-sm font-medium text-yellow-800">Leftover Management Tips</h3>
             <div className="mt-2 text-sm text-yellow-700">
               <ul className="list-disc list-inside space-y-1">
-                <li>Track leftover pieces to maximize material efficiency</li>
+                <li>Track leftover pieces by actual length/width and link to parent sheet for complete traceability</li>
+                <li>Each leftover is linked to its parent sheet, showing the original factory and purchase batch</li>
                 <li>Mark offcuts as &quot;used&quot; when they are repurposed for smaller orders</li>
                 <li>Consider organizing leftovers by size and material type</li>
-                <li>Regular inventory of leftovers helps reduce waste</li>
+                <li>Regular inventory of leftovers helps reduce waste and maximize material efficiency</li>
               </ul>
             </div>
           </div>
