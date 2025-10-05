@@ -63,7 +63,7 @@ export default function Dashboard() {
         </div>
         <div className="bg-white rounded-lg shadow-md p-6">
           <h3 className="text-gray-600 text-sm font-medium">Total Profit</h3>
-          <p className="text-3xl font-bold text-purple-600">${totalProfit.toFixed(2)}</p>
+          <p className="text-3xl font-bold text-purple-600">₹{totalProfit.toFixed(2)}</p>
         </div>
       </div>
 
@@ -128,7 +128,7 @@ export default function Dashboard() {
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Customer</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Material</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Order Ref</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Profit</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Profit (₹)</th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
@@ -138,7 +138,7 @@ export default function Dashboard() {
                   <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">{row.Customer}</td>
                   <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">{row.Material}</td>
                   <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">{row['Order Ref']}</td>
-                  <td className="px-4 py-4 whitespace-nowrap text-sm text-green-600 font-medium">${row.Profit?.toFixed(2)}</td>
+                  <td className="px-4 py-4 whitespace-nowrap text-sm text-green-600 font-medium">₹{row.Profit?.toFixed(2)}</td>
                 </tr>
               ))}
             </tbody>

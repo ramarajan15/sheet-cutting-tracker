@@ -198,7 +198,7 @@ export default function Purchases() {
         </div>
         <div className="bg-purple-50 rounded-lg shadow-md p-6">
           <h3 className="text-sm font-medium text-purple-600 uppercase tracking-wide">Total Cost</h3>
-          <p className="text-3xl font-bold text-purple-900 mt-2">${totalCost.toFixed(2)}</p>
+          <p className="text-3xl font-bold text-purple-900 mt-2">₹{totalCost.toFixed(2)}</p>
         </div>
       </div>
 
@@ -258,11 +258,11 @@ export default function Purchases() {
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Factory</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Material</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Size</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Size (mm)</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Thickness</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Qty</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Unit Cost</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total Cost</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Unit Cost (₹)</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total Cost (₹)</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Batch Ref</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
               </tr>
@@ -293,10 +293,10 @@ export default function Purchases() {
                     {purchase.qty}
                   </td>
                   <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
-                    ${purchase.unitCost.toFixed(2)}
+                    ₹{purchase.unitCost.toFixed(2)}
                   </td>
                   <td className="px-4 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                    ${purchase.totalCost.toFixed(2)}
+                    ₹{purchase.totalCost.toFixed(2)}
                   </td>
                   <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500">
                     {purchase.batchRef || '-'}
@@ -406,17 +406,17 @@ export default function Purchases() {
           </div>
           <div className="grid grid-cols-3 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Size</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Size (mm)</label>
               <input
                 type="text"
                 value={formData.size}
                 onChange={(e) => setFormData({ ...formData, size: e.target.value })}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="e.g., 2440x1220"
+                placeholder="e.g., 2440x1220 (in mm)"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Thickness</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Thickness (mm)</label>
               <input
                 type="text"
                 value={formData.thickness}
@@ -543,7 +543,7 @@ export default function Purchases() {
           </div>
           <div className="grid grid-cols-3 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Size</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Size (mm)</label>
               <input
                 type="text"
                 value={formData.size}
@@ -552,7 +552,7 @@ export default function Purchases() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Thickness</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Thickness (mm)</label>
               <input
                 type="text"
                 value={formData.thickness}
@@ -573,7 +573,7 @@ export default function Purchases() {
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Unit Cost</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Unit Cost (₹)</label>
               <input
                 type="number"
                 value={formData.unitCost}
@@ -584,7 +584,7 @@ export default function Purchases() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Total Cost (Auto-calculated)</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Total Cost (₹) (Auto-calculated)</label>
               <input
                 type="number"
                 value={calculateTotalCost(formData.qty || 0, formData.unitCost || 0)}
