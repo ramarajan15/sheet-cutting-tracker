@@ -1,11 +1,30 @@
 import React, { useEffect, useState } from 'react';
-import { readFactories, readPurchases, Factory, Purchase } from '@/utils/excelUtils';
+import { readFactories, readPurchases, Factory, Purchase, exportToExcel } from '@/utils/excelUtils';
+import Modal from '@/components/Modal';
 
 export default function Factories() {
   const [factories, setFactories] = useState<Factory[]>([]);
   const [purchases, setPurchases] = useState<Purchase[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedFactory, setSelectedFactory] = useState<string | null>(null);
+  
+  // Modal states
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [currentFactory, setCurrentFactory] = useState<Factory | null>(null);
+  
+  // Form state
+  const [formData, setFormData] = useState<Partial<Factory>>({
+    id: '',
+    name: '',
+    location: '',
+    contact: '',
+    email: '',
+    phone: '',
+    materials: [],
+    notes: ''
+  });
 
   useEffect(() => {
     const loadData = async () => {
@@ -39,6 +58,82 @@ export default function Factories() {
     return Array.from(materials);
   };
 
+  // CRUD handlers
+  const handleAdd = () => {
+    setFormData({
+      id: '',
+      name: '',
+      location: '',
+      contact: '',
+      email: '',
+      phone: '',
+      materials: [],
+      notes: ''
+    });
+    setIsAddModalOpen(true);
+  };
+
+  const handleEdit = (factory: Factory) => {
+    setCurrentFactory(factory);
+    setFormData({ ...factory });
+    setIsEditModalOpen(true);
+  };
+
+  const handleDelete = (factory: Factory) => {
+    setCurrentFactory(factory);
+    setIsDeleteModalOpen(true);
+  };
+
+  const handleSaveAdd = () => {
+    if (!formData.id || !formData.name) {
+      alert('Please fill in required fields (ID and Name)');
+      return;
+    }
+
+    const newFactory: Factory = {
+      id: formData.id,
+      name: formData.name,
+      location: formData.location || '',
+      contact: formData.contact || '',
+      email: formData.email || '',
+      phone: formData.phone || '',
+      materials: formData.materials || [],
+      notes: formData.notes || ''
+    };
+
+    setFactories([...factories, newFactory]);
+    setIsAddModalOpen(false);
+  };
+
+  const handleSaveEdit = () => {
+    if (!formData.id || !formData.name) {
+      alert('Please fill in required fields (ID and Name)');
+      return;
+    }
+
+    const updatedFactories = factories.map(f =>
+      f.id === currentFactory?.id ? { ...formData as Factory } : f
+    );
+
+    setFactories(updatedFactories);
+    setIsEditModalOpen(false);
+  };
+
+  const handleConfirmDelete = () => {
+    if (currentFactory) {
+      setFactories(factories.filter(f => f.id !== currentFactory.id));
+      setIsDeleteModalOpen(false);
+      setCurrentFactory(null);
+    }
+  };
+
+  const handleExport = () => {
+    exportToExcel('SheetCuttingBusinessTemplate_Export.xlsx', {
+      factories,
+      purchases
+    });
+  };
+
   if (loading) {
     return (
       <div className="flex justify-center items-center h-64">
@@ -49,7 +144,23 @@ export default function Factories() {
 
   return (
     <div>
-      <h1 className="text-3xl font-bold mb-6">Factory/Supplier Management</h1>
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-3xl font-bold">Factory/Supplier Management</h1>
+        <div className="flex gap-2">
+          <button
+            onClick={handleExport}
+            className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-md font-medium transition-colors"
+          >
+            Export to Excel
+          </button>
+          <button
+            onClick={handleAdd}
+            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md font-medium transition-colors"
+          >
+            + Add New Factory
+          </button>
+        </div>
+      </div>
       
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
@@ -131,12 +242,26 @@ export default function Factories() {
                       ${totalSpent.toFixed(2)}
                     </td>
                     <td className="px-4 py-4 whitespace-nowrap text-sm">
-                      <button
-                        onClick={() => setSelectedFactory(selectedFactory === factory.id ? null : factory.id)}
-                        className="text-blue-600 hover:text-blue-800 font-medium"
-                      >
-                        {selectedFactory === factory.id ? 'Hide' : 'View'} Purchases
-                      </button>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => handleEdit(factory)}
+                          className="text-blue-600 hover:text-blue-800 font-medium"
+                        >
+                          Edit
+                        </button>
+                        <button
+                          onClick={() => handleDelete(factory)}
+                          className="text-red-600 hover:text-red-800 font-medium"
+                        >
+                          Delete
+                        </button>
+                        <button
+                          onClick={() => setSelectedFactory(selectedFactory === factory.id ? null : factory.id)}
+                          className="text-gray-600 hover:text-gray-800 font-medium"
+                        >
+                          {selectedFactory === factory.id ? 'Hide' : 'View'} Purchases
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 );
@@ -218,6 +343,214 @@ export default function Factories() {
           </div>
         </div>
       </div>
+
+      {/* Add Factory Modal */}
+      <Modal isOpen={isAddModalOpen} onClose={() => setIsAddModalOpen(false)} title="Add New Factory" maxWidth="xl">
+        <div className="space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Factory ID *</label>
+              <input
+                type="text"
+                value={formData.id}
+                onChange={(e) => setFormData({ ...formData, id: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="e.g., FAC001"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Factory Name *</label>
+              <input
+                type="text"
+                value={formData.name}
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="e.g., Steel Works Ltd"
+              />
+            </div>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Location</label>
+            <input
+              type="text"
+              value={formData.location}
+              onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="e.g., New York, USA"
+            />
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+              <input
+                type="email"
+                value={formData.email}
+                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="factory@example.com"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Phone</label>
+              <input
+                type="text"
+                value={formData.phone}
+                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="+1-555-0123"
+              />
+            </div>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Contact Person</label>
+            <input
+              type="text"
+              value={formData.contact}
+              onChange={(e) => setFormData({ ...formData, contact: e.target.value })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Contact name"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Notes</label>
+            <textarea
+              value={formData.notes}
+              onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              rows={3}
+              placeholder="Additional notes..."
+            />
+          </div>
+          <div className="flex justify-end gap-2 mt-6">
+            <button
+              onClick={() => setIsAddModalOpen(false)}
+              className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleSaveAdd}
+              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+            >
+              Add Factory
+            </button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Edit Factory Modal */}
+      <Modal isOpen={isEditModalOpen} onClose={() => setIsEditModalOpen(false)} title="Edit Factory" maxWidth="xl">
+        <div className="space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Factory ID *</label>
+              <input
+                type="text"
+                value={formData.id}
+                onChange={(e) => setFormData({ ...formData, id: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-100"
+                disabled
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Factory Name *</label>
+              <input
+                type="text"
+                value={formData.name}
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Location</label>
+            <input
+              type="text"
+              value={formData.location}
+              onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+              <input
+                type="email"
+                value={formData.email}
+                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Phone</label>
+              <input
+                type="text"
+                value={formData.phone}
+                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Contact Person</label>
+            <input
+              type="text"
+              value={formData.contact}
+              onChange={(e) => setFormData({ ...formData, contact: e.target.value })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Notes</label>
+            <textarea
+              value={formData.notes}
+              onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              rows={3}
+            />
+          </div>
+          <div className="flex justify-end gap-2 mt-6">
+            <button
+              onClick={() => setIsEditModalOpen(false)}
+              className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleSaveEdit}
+              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+            >
+              Save Changes
+            </button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Delete Confirmation Modal */}
+      <Modal isOpen={isDeleteModalOpen} onClose={() => setIsDeleteModalOpen(false)} title="Delete Factory" maxWidth="md">
+        <div>
+          <p className="text-gray-700 mb-4">
+            Are you sure you want to delete factory &quot;<strong>{currentFactory?.name}</strong>&quot;?
+          </p>
+          <p className="text-sm text-red-600 mb-6">
+            Warning: This action cannot be undone.
+          </p>
+          <div className="flex justify-end gap-2">
+            <button
+              onClick={() => setIsDeleteModalOpen(false)}
+              className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleConfirmDelete}
+              className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
+            >
+              Delete
+            </button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 }

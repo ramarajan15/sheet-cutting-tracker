@@ -1,11 +1,28 @@
 import React, { useEffect, useState } from 'react';
-import { readCustomers, readOrders, Customer, Order } from '@/utils/excelUtils';
+import { readCustomers, readOrders, Customer, Order, exportToExcel } from '@/utils/excelUtils';
+import Modal from '@/components/Modal';
 
 export default function Customers() {
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedCustomer, setSelectedCustomer] = useState<string | null>(null);
+  
+  // Modal states
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [currentCustomer, setCurrentCustomer] = useState<Customer | null>(null);
+  
+  // Form state
+  const [formData, setFormData] = useState<Partial<Customer>>({
+    id: '',
+    name: '',
+    email: '',
+    phone: '',
+    address: '',
+    notes: ''
+  });
 
   useEffect(() => {
     const loadData = async () => {
@@ -38,6 +55,78 @@ export default function Customers() {
     return customerOrders.reduce((total, order) => total + (order.profit || 0), 0);
   };
 
+  // CRUD handlers
+  const handleAdd = () => {
+    setFormData({
+      id: '',
+      name: '',
+      email: '',
+      phone: '',
+      address: '',
+      notes: ''
+    });
+    setIsAddModalOpen(true);
+  };
+
+  const handleEdit = (customer: Customer) => {
+    setCurrentCustomer(customer);
+    setFormData({ ...customer });
+    setIsEditModalOpen(true);
+  };
+
+  const handleDelete = (customer: Customer) => {
+    setCurrentCustomer(customer);
+    setIsDeleteModalOpen(true);
+  };
+
+  const handleSaveAdd = () => {
+    if (!formData.id || !formData.name) {
+      alert('Please fill in required fields (ID and Name)');
+      return;
+    }
+
+    const newCustomer: Customer = {
+      id: formData.id,
+      name: formData.name,
+      email: formData.email || '',
+      phone: formData.phone || '',
+      address: formData.address || '',
+      notes: formData.notes || ''
+    };
+
+    setCustomers([...customers, newCustomer]);
+    setIsAddModalOpen(false);
+  };
+
+  const handleSaveEdit = () => {
+    if (!formData.id || !formData.name) {
+      alert('Please fill in required fields (ID and Name)');
+      return;
+    }
+
+    const updatedCustomers = customers.map(c =>
+      c.id === currentCustomer?.id ? { ...formData as Customer } : c
+    );
+
+    setCustomers(updatedCustomers);
+    setIsEditModalOpen(false);
+  };
+
+  const handleConfirmDelete = () => {
+    if (currentCustomer) {
+      setCustomers(customers.filter(c => c.id !== currentCustomer.id));
+      setIsDeleteModalOpen(false);
+      setCurrentCustomer(null);
+    }
+  };
+
+  const handleExport = () => {
+    exportToExcel('SheetCuttingBusinessTemplate_Export.xlsx', {
+      customers,
+      orders
+    });
+  };
+
   if (loading) {
     return (
       <div className="flex justify-center items-center h-64">
@@ -48,7 +137,23 @@ export default function Customers() {
 
   return (
     <div>
-      <h1 className="text-3xl font-bold mb-6">Customer Management</h1>
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-3xl font-bold">Customer Management</h1>
+        <div className="flex gap-2">
+          <button
+            onClick={handleExport}
+            className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-md font-medium transition-colors"
+          >
+            Export to Excel
+          </button>
+          <button
+            onClick={handleAdd}
+            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md font-medium transition-colors"
+          >
+            + Add New Customer
+          </button>
+        </div>
+      </div>
       
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
@@ -119,12 +224,26 @@ export default function Customers() {
                       </span>
                     </td>
                     <td className="px-4 py-4 whitespace-nowrap text-sm">
-                      <button
-                        onClick={() => setSelectedCustomer(selectedCustomer === customer.id ? null : customer.id)}
-                        className="text-blue-600 hover:text-blue-800 font-medium"
-                      >
-                        {selectedCustomer === customer.id ? 'Hide' : 'View'} Orders
-                      </button>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => handleEdit(customer)}
+                          className="text-blue-600 hover:text-blue-800 font-medium"
+                        >
+                          Edit
+                        </button>
+                        <button
+                          onClick={() => handleDelete(customer)}
+                          className="text-red-600 hover:text-red-800 font-medium"
+                        >
+                          Delete
+                        </button>
+                        <button
+                          onClick={() => setSelectedCustomer(selectedCustomer === customer.id ? null : customer.id)}
+                          className="text-gray-600 hover:text-gray-800 font-medium"
+                        >
+                          {selectedCustomer === customer.id ? 'Hide' : 'View'} Orders
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 );
@@ -204,6 +323,194 @@ export default function Customers() {
           </div>
         </div>
       </div>
+
+      {/* Add Customer Modal */}
+      <Modal isOpen={isAddModalOpen} onClose={() => setIsAddModalOpen(false)} title="Add New Customer" maxWidth="xl">
+        <div className="space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Customer ID *</label>
+              <input
+                type="text"
+                value={formData.id}
+                onChange={(e) => setFormData({ ...formData, id: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="e.g., CUST001"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Customer Name *</label>
+              <input
+                type="text"
+                value={formData.name}
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="e.g., ABC Manufacturing"
+              />
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+              <input
+                type="email"
+                value={formData.email}
+                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="customer@example.com"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Phone</label>
+              <input
+                type="text"
+                value={formData.phone}
+                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="+1-555-0123"
+              />
+            </div>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Address</label>
+            <input
+              type="text"
+              value={formData.address}
+              onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Full address"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Notes</label>
+            <textarea
+              value={formData.notes}
+              onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              rows={3}
+              placeholder="Additional notes..."
+            />
+          </div>
+          <div className="flex justify-end gap-2 mt-6">
+            <button
+              onClick={() => setIsAddModalOpen(false)}
+              className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleSaveAdd}
+              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+            >
+              Add Customer
+            </button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Edit Customer Modal */}
+      <Modal isOpen={isEditModalOpen} onClose={() => setIsEditModalOpen(false)} title="Edit Customer" maxWidth="xl">
+        <div className="space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Customer ID *</label>
+              <input
+                type="text"
+                value={formData.id}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-100"
+                disabled
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Customer Name *</label>
+              <input
+                type="text"
+                value={formData.name}
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+              <input
+                type="email"
+                value={formData.email}
+                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Phone</label>
+              <input
+                type="text"
+                value={formData.phone}
+                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Address</label>
+            <input
+              type="text"
+              value={formData.address}
+              onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Notes</label>
+            <textarea
+              value={formData.notes}
+              onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              rows={3}
+            />
+          </div>
+          <div className="flex justify-end gap-2 mt-6">
+            <button
+              onClick={() => setIsEditModalOpen(false)}
+              className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleSaveEdit}
+              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+            >
+              Save Changes
+            </button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Delete Confirmation Modal */}
+      <Modal isOpen={isDeleteModalOpen} onClose={() => setIsDeleteModalOpen(false)} title="Delete Customer" maxWidth="md">
+        <div>
+          <p className="text-gray-700 mb-4">
+            Are you sure you want to delete customer &quot;<strong>{currentCustomer?.name}</strong>&quot;?
+          </p>
+          <p className="text-sm text-red-600 mb-6">
+            Warning: This action cannot be undone.
+          </p>
+          <div className="flex justify-end gap-2">
+            <button
+              onClick={() => setIsDeleteModalOpen(false)}
+              className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleConfirmDelete}
+              className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
+            >
+              Delete
+            </button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 }

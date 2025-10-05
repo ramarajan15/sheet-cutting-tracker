@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { readPurchases, readFactories, Purchase, Factory } from '@/utils/excelUtils';
+import { readPurchases, readFactories, Purchase, Factory, exportToExcel } from '@/utils/excelUtils';
+import Modal from '@/components/Modal';
 
 export default function Purchases() {
   const [purchases, setPurchases] = useState<Purchase[]>([]);
@@ -7,6 +8,27 @@ export default function Purchases() {
   const [loading, setLoading] = useState(true);
   const [filterFactory, setFilterFactory] = useState<string>('all');
   const [filterMaterial, setFilterMaterial] = useState<string>('all');
+  
+  // Modal states
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [currentPurchase, setCurrentPurchase] = useState<Purchase | null>(null);
+  
+  // Form state
+  const [formData, setFormData] = useState<Partial<Purchase>>({
+    id: '',
+    date: '',
+    factoryId: '',
+    material: '',
+    size: '',
+    thickness: '',
+    qty: 0,
+    unitCost: 0,
+    totalCost: 0,
+    batchRef: '',
+    notes: ''
+  });
 
   useEffect(() => {
     const loadData = async () => {
@@ -42,6 +64,100 @@ export default function Purchases() {
     return factory?.name || factoryId;
   };
 
+  // CRUD handlers
+  const handleAdd = () => {
+    const today = new Date().toISOString().split('T')[0];
+    setFormData({
+      id: '',
+      date: today,
+      factoryId: '',
+      material: '',
+      size: '',
+      thickness: '',
+      qty: 0,
+      unitCost: 0,
+      totalCost: 0,
+      batchRef: '',
+      notes: ''
+    });
+    setIsAddModalOpen(true);
+  };
+
+  const handleEdit = (purchase: Purchase) => {
+    setCurrentPurchase(purchase);
+    setFormData({ ...purchase });
+    setIsEditModalOpen(true);
+  };
+
+  const handleDelete = (purchase: Purchase) => {
+    setCurrentPurchase(purchase);
+    setIsDeleteModalOpen(true);
+  };
+
+  const calculateTotalCost = (qty: number, unitCost: number) => {
+    return qty * unitCost;
+  };
+
+  const handleSaveAdd = () => {
+    if (!formData.id || !formData.factoryId || !formData.material) {
+      alert('Please fill in required fields (ID, Factory, Material)');
+      return;
+    }
+
+    const totalCost = calculateTotalCost(formData.qty || 0, formData.unitCost || 0);
+    const factoryName = getFactoryName(formData.factoryId || '');
+
+    const newPurchase: Purchase = {
+      id: formData.id!,
+      date: formData.date || new Date().toISOString().split('T')[0],
+      factoryId: formData.factoryId!,
+      factoryName,
+      material: formData.material!,
+      size: formData.size || '',
+      thickness: formData.thickness || '',
+      qty: formData.qty || 0,
+      unitCost: formData.unitCost || 0,
+      totalCost,
+      batchRef: formData.batchRef || '',
+      notes: formData.notes || ''
+    };
+
+    setPurchases([...purchases, newPurchase]);
+    setIsAddModalOpen(false);
+  };
+
+  const handleSaveEdit = () => {
+    if (!formData.id || !formData.factoryId || !formData.material) {
+      alert('Please fill in required fields (ID, Factory, Material)');
+      return;
+    }
+
+    const totalCost = calculateTotalCost(formData.qty || 0, formData.unitCost || 0);
+    const factoryName = getFactoryName(formData.factoryId || '');
+
+    const updatedPurchases = purchases.map(p =>
+      p.id === currentPurchase?.id ? { ...formData as Purchase, totalCost, factoryName } : p
+    );
+
+    setPurchases(updatedPurchases);
+    setIsEditModalOpen(false);
+  };
+
+  const handleConfirmDelete = () => {
+    if (currentPurchase) {
+      setPurchases(purchases.filter(p => p.id !== currentPurchase.id));
+      setIsDeleteModalOpen(false);
+      setCurrentPurchase(null);
+    }
+  };
+
+  const handleExport = () => {
+    exportToExcel('SheetCuttingBusinessTemplate_Export.xlsx', {
+      purchases,
+      factories
+    });
+  };
+
   if (loading) {
     return (
       <div className="flex justify-center items-center h-64">
@@ -52,7 +168,23 @@ export default function Purchases() {
 
   return (
     <div>
-      <h1 className="text-3xl font-bold mb-6">Purchase Management</h1>
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-3xl font-bold">Purchase Management</h1>
+        <div className="flex gap-2">
+          <button
+            onClick={handleExport}
+            className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-md font-medium transition-colors"
+          >
+            Export to Excel
+          </button>
+          <button
+            onClick={handleAdd}
+            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md font-medium transition-colors"
+          >
+            + Add New Purchase
+          </button>
+        </div>
+      </div>
       
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
@@ -132,6 +264,7 @@ export default function Purchases() {
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Unit Cost</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total Cost</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Batch Ref</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
@@ -167,6 +300,22 @@ export default function Purchases() {
                   </td>
                   <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500">
                     {purchase.batchRef || '-'}
+                  </td>
+                  <td className="px-4 py-4 whitespace-nowrap text-sm">
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => handleEdit(purchase)}
+                        className="text-blue-600 hover:text-blue-800 font-medium"
+                      >
+                        Edit
+                      </button>
+                      <button
+                        onClick={() => handleDelete(purchase)}
+                        className="text-red-600 hover:text-red-800 font-medium"
+                      >
+                        Delete
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -205,6 +354,305 @@ export default function Purchases() {
           </div>
         </div>
       </div>
+
+      {/* Add Purchase Modal */}
+      <Modal isOpen={isAddModalOpen} onClose={() => setIsAddModalOpen(false)} title="Add New Purchase" maxWidth="xl">
+        <div className="space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Purchase ID *</label>
+              <input
+                type="text"
+                value={formData.id}
+                onChange={(e) => setFormData({ ...formData, id: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="e.g., PUR001"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Date *</label>
+              <input
+                type="date"
+                value={formData.date}
+                onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Factory *</label>
+              <select
+                value={formData.factoryId}
+                onChange={(e) => setFormData({ ...formData, factoryId: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="">Select Factory</option>
+                {factories.map(factory => (
+                  <option key={factory.id} value={factory.id}>{factory.name}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Material *</label>
+              <input
+                type="text"
+                value={formData.material}
+                onChange={(e) => setFormData({ ...formData, material: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="e.g., Stainless Steel"
+              />
+            </div>
+          </div>
+          <div className="grid grid-cols-3 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Size</label>
+              <input
+                type="text"
+                value={formData.size}
+                onChange={(e) => setFormData({ ...formData, size: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="e.g., 2440x1220"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Thickness</label>
+              <input
+                type="text"
+                value={formData.thickness}
+                onChange={(e) => setFormData({ ...formData, thickness: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="e.g., 3mm"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Quantity</label>
+              <input
+                type="number"
+                value={formData.qty}
+                onChange={(e) => setFormData({ ...formData, qty: parseFloat(e.target.value) || 0 })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                min="0"
+              />
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Unit Cost</label>
+              <input
+                type="number"
+                value={formData.unitCost}
+                onChange={(e) => setFormData({ ...formData, unitCost: parseFloat(e.target.value) || 0 })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                min="0"
+                step="0.01"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Total Cost (Auto-calculated)</label>
+              <input
+                type="number"
+                value={calculateTotalCost(formData.qty || 0, formData.unitCost || 0)}
+                readOnly
+                className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-100"
+              />
+            </div>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Batch Reference</label>
+            <input
+              type="text"
+              value={formData.batchRef}
+              onChange={(e) => setFormData({ ...formData, batchRef: e.target.value })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="e.g., BATCH-2024-001"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Notes</label>
+            <textarea
+              value={formData.notes}
+              onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              rows={3}
+              placeholder="Additional notes..."
+            />
+          </div>
+          <div className="flex justify-end gap-2 mt-6">
+            <button
+              onClick={() => setIsAddModalOpen(false)}
+              className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleSaveAdd}
+              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+            >
+              Add Purchase
+            </button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Edit Purchase Modal */}
+      <Modal isOpen={isEditModalOpen} onClose={() => setIsEditModalOpen(false)} title="Edit Purchase" maxWidth="xl">
+        <div className="space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Purchase ID *</label>
+              <input
+                type="text"
+                value={formData.id}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-100"
+                disabled
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Date *</label>
+              <input
+                type="date"
+                value={formData.date}
+                onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Factory *</label>
+              <select
+                value={formData.factoryId}
+                onChange={(e) => setFormData({ ...formData, factoryId: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                {factories.map(factory => (
+                  <option key={factory.id} value={factory.id}>{factory.name}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Material *</label>
+              <input
+                type="text"
+                value={formData.material}
+                onChange={(e) => setFormData({ ...formData, material: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+          </div>
+          <div className="grid grid-cols-3 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Size</label>
+              <input
+                type="text"
+                value={formData.size}
+                onChange={(e) => setFormData({ ...formData, size: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Thickness</label>
+              <input
+                type="text"
+                value={formData.thickness}
+                onChange={(e) => setFormData({ ...formData, thickness: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Quantity</label>
+              <input
+                type="number"
+                value={formData.qty}
+                onChange={(e) => setFormData({ ...formData, qty: parseFloat(e.target.value) || 0 })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                min="0"
+              />
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Unit Cost</label>
+              <input
+                type="number"
+                value={formData.unitCost}
+                onChange={(e) => setFormData({ ...formData, unitCost: parseFloat(e.target.value) || 0 })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                min="0"
+                step="0.01"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Total Cost (Auto-calculated)</label>
+              <input
+                type="number"
+                value={calculateTotalCost(formData.qty || 0, formData.unitCost || 0)}
+                readOnly
+                className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-100"
+              />
+            </div>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Batch Reference</label>
+            <input
+              type="text"
+              value={formData.batchRef}
+              onChange={(e) => setFormData({ ...formData, batchRef: e.target.value })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Notes</label>
+            <textarea
+              value={formData.notes}
+              onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              rows={3}
+            />
+          </div>
+          <div className="flex justify-end gap-2 mt-6">
+            <button
+              onClick={() => setIsEditModalOpen(false)}
+              className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleSaveEdit}
+              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+            >
+              Save Changes
+            </button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Delete Confirmation Modal */}
+      <Modal isOpen={isDeleteModalOpen} onClose={() => setIsDeleteModalOpen(false)} title="Delete Purchase" maxWidth="md">
+        <div>
+          <p className="text-gray-700 mb-4">
+            Are you sure you want to delete purchase &quot;<strong>{currentPurchase?.id}</strong>&quot;?
+          </p>
+          <p className="text-sm text-red-600 mb-6">
+            Warning: This action cannot be undone.
+          </p>
+          <div className="flex justify-end gap-2">
+            <button
+              onClick={() => setIsDeleteModalOpen(false)}
+              className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleConfirmDelete}
+              className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
+            >
+              Delete
+            </button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 }

@@ -8,11 +8,13 @@ A Next.js web application for managing and tracking sheet cutting operations for
 - **Stock Management**: Track material inventory and usage with purchase and factory traceability
 - **Orders Management**: Manage customer orders and cutting jobs with sheet-to-factory traceability
 - **Leftovers Management**: Track and manage leftover pieces linked to parent sheets
-- **Customer Management**: Complete customer profiles with full order history
-- **Factory/Supplier Management**: Track suppliers and materials they provide
-- **Purchase Management**: Incoming stock tracking with date, factory, material, size, qty, cost, and batch reference
+- **Customer Management**: Complete customer profiles with full order history and CRUD operations
+- **Factory/Supplier Management**: Track suppliers and materials they provide with full CRUD operations
+- **Purchase Management**: Incoming stock tracking with date, factory, material, size, qty, cost, and batch reference with CRUD operations
 - **Sheet Cutting Visualizer**: Visualize and optimize sheet cutting layouts with manual and auto-arrangement
 - **End-to-End Material Traceability**: Full supply chain tracking from factory purchase to customer order
+- **CRUD Operations**: Create, Read, Update, and Delete functionality for Factories, Purchases, Customers, and Orders
+- **Excel Export**: Export all data to Excel file for offline use and backup
 
 ## Technology Stack
 
@@ -128,6 +130,104 @@ vercel
 5. Click "Deploy"
 
 Vercel will automatically detect Next.js and configure the build settings.
+
+## Using CRUD Features
+
+The application provides full Create, Read, Update, and Delete (CRUD) functionality for managing your business data.
+
+### Managing Factories (Suppliers)
+
+Navigate to `/factories` to manage your supplier/factory information:
+
+1. **Add New Factory**: Click the "Add New Factory" button in the top-right corner
+   - Fill in required fields: Factory ID and Name
+   - Optional fields: Location, Email, Phone, Contact Person, and Notes
+   - Click "Add Factory" to save
+
+2. **Edit Factory**: Click "Edit" next to any factory in the table
+   - Modify any fields (ID is locked)
+   - Click "Save Changes" to update
+
+3. **Delete Factory**: Click "Delete" next to any factory
+   - Confirm deletion in the popup modal
+   - Warning: This action cannot be undone
+
+4. **Export Data**: Click "Export to Excel" to download current factory and purchase data
+
+### Managing Purchases
+
+Navigate to `/purchases` to manage incoming stock purchases:
+
+1. **Add New Purchase**: Click the "Add New Purchase" button
+   - Required fields: Purchase ID, Factory, and Material
+   - Optional fields: Date, Size, Thickness, Quantity, Unit Cost, Batch Reference, and Notes
+   - Total Cost is automatically calculated from Quantity × Unit Cost
+   - Click "Add Purchase" to save
+
+2. **Edit Purchase**: Click "Edit" next to any purchase in the table
+   - Modify any fields (ID is locked)
+   - Total Cost updates automatically
+   - Click "Save Changes" to update
+
+3. **Delete Purchase**: Click "Delete" next to any purchase
+   - Confirm deletion in the popup modal
+
+4. **Filter and Export**: Use the filter dropdowns to narrow down purchases by factory or material, then export to Excel
+
+### Managing Customers
+
+Navigate to `/customers` to manage customer profiles:
+
+1. **Add New Customer**: Click the "Add New Customer" button
+   - Required fields: Customer ID and Name
+   - Optional fields: Email, Phone, Address, and Notes
+   - Click "Add Customer" to save
+
+2. **Edit Customer**: Click "Edit" next to any customer in the table
+   - Modify any fields (ID is locked)
+   - Click "Save Changes" to update
+
+3. **Delete Customer**: Click "Delete" next to any customer
+   - Confirm deletion in the popup modal
+
+4. **View Order History**: Click "View Orders" to see all orders for a specific customer
+
+5. **Export Data**: Click "Export to Excel" to download current customer and order data
+
+### Managing Orders
+
+Navigate to `/orders` to manage customer orders:
+
+1. **Add New Order**: Click the "Add New Order" button
+   - Required fields: Order ID, Order Ref, Customer, and Material
+   - Optional fields: Date, Piece Size, Quantity, Unit Cost, Unit Sale Price, and Notes
+   - Profit is automatically calculated from (Quantity × Unit Sale Price) - (Quantity × Unit Cost)
+   - Click "Add Order" to save
+
+2. **Edit Order**: Click "Edit" next to any order in the table
+   - Modify any fields (ID is locked)
+   - Profit updates automatically
+   - Click "Save Changes" to update
+
+3. **Delete Order**: Click "Delete" next to any order
+   - Confirm deletion in the popup modal
+
+4. **Filter Orders**: Use the material filter dropdown to narrow down orders
+   - Summary cards update automatically to reflect filtered data
+
+5. **Export Data**: Click "Export to Excel" to download current order and customer data
+
+### Excel Export Feature
+
+All CRUD pages include an "Export to Excel" button that allows you to:
+
+- Download current in-memory data as an Excel file
+- Preserve all sheets in their proper format
+- Use the exported file as a backup or for offline analysis
+- Share data with team members
+- File is named `SheetCuttingBusinessTemplate_Export.xlsx`
+
+**Note**: The exported Excel file contains the current in-memory state of your data. Changes made through CRUD operations are reflected in memory but not automatically saved to the original Excel file. Use the export feature to save your changes.
 
 ## Customization
 
