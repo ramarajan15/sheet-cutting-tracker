@@ -137,18 +137,18 @@ export default function Customers() {
 
   return (
     <div>
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold">Customer Management</h1>
-        <div className="flex gap-2">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-4 sm:mb-6">
+        <h1 className="text-2xl sm:text-3xl font-bold">Customer Management</h1>
+        <div className="flex flex-col sm:flex-row gap-2">
           <button
             onClick={handleExport}
-            className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-md font-medium transition-colors"
+            className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-md font-medium transition-colors text-sm sm:text-base"
           >
             Export to Excel
           </button>
           <button
             onClick={handleAdd}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md font-medium transition-colors"
+            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md font-medium transition-colors text-sm sm:text-base"
           >
             + Add New Customer
           </button>
@@ -156,28 +156,28 @@ export default function Customers() {
       </div>
       
       {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-        <div className="bg-blue-50 rounded-lg shadow-md p-6">
-          <h3 className="text-sm font-medium text-blue-600 uppercase tracking-wide">Total Customers</h3>
-          <p className="text-3xl font-bold text-blue-900 mt-2">{customers.length}</p>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-4 sm:mb-6">
+        <div className="bg-blue-50 rounded-lg shadow-md p-4 sm:p-6">
+          <h3 className="text-xs sm:text-sm font-medium text-blue-600 uppercase tracking-wide">Total Customers</h3>
+          <p className="text-2xl sm:text-3xl font-bold text-blue-900 mt-2">{customers.length}</p>
         </div>
-        <div className="bg-green-50 rounded-lg shadow-md p-6">
-          <h3 className="text-sm font-medium text-green-600 uppercase tracking-wide">Total Orders</h3>
-          <p className="text-3xl font-bold text-green-900 mt-2">{orders.length}</p>
+        <div className="bg-green-50 rounded-lg shadow-md p-4 sm:p-6">
+          <h3 className="text-xs sm:text-sm font-medium text-green-600 uppercase tracking-wide">Total Orders</h3>
+          <p className="text-2xl sm:text-3xl font-bold text-green-900 mt-2">{orders.length}</p>
         </div>
-        <div className="bg-purple-50 rounded-lg shadow-md p-6">
-          <h3 className="text-sm font-medium text-purple-600 uppercase tracking-wide">Active Customers</h3>
-          <p className="text-3xl font-bold text-purple-900 mt-2">
+        <div className="bg-purple-50 rounded-lg shadow-md p-4 sm:p-6">
+          <h3 className="text-xs sm:text-sm font-medium text-purple-600 uppercase tracking-wide">Active Customers</h3>
+          <p className="text-2xl sm:text-3xl font-bold text-purple-900 mt-2">
             {customers.filter(c => getCustomerOrders(c.id).length > 0).length}
           </p>
         </div>
       </div>
 
       {/* Customers Table */}
-      <div className="bg-white rounded-lg shadow-md overflow-hidden mb-6">
-        <div className="px-6 py-4 bg-gray-50 border-b border-gray-200">
-          <h2 className="text-xl font-bold text-gray-800">Customer Profiles</h2>
-          <p className="text-sm text-gray-600 mt-1">
+      <div className="bg-white rounded-lg shadow-md overflow-hidden mb-4 sm:mb-6">
+        <div className="px-4 sm:px-6 py-4 bg-gray-50 border-b border-gray-200">
+          <h2 className="text-lg sm:text-xl font-bold text-gray-800">Customer Profiles</h2>
+          <p className="text-xs sm:text-sm text-gray-600 mt-1">
             Track customer information and their complete order history
           </p>
         </div>

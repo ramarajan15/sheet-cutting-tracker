@@ -174,13 +174,13 @@ export default function Visualizer() {
 
   return (
     <div>
-      <h1 className="text-3xl font-bold mb-6">Sheet Cutting Visualizer</h1>
+      <h1 className="text-2xl sm:text-3xl font-bold mb-4 sm:mb-6">Sheet Cutting Visualizer</h1>
       
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
         {/* Controls Panel */}
         <div className="lg:col-span-1">
-          <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-            <h2 className="text-xl font-bold mb-4">Sheet Configuration</h2>
+          <div className="bg-white rounded-lg shadow-md p-4 sm:p-6 mb-4 sm:mb-6">
+            <h2 className="text-lg sm:text-xl font-bold mb-4">Sheet Configuration</h2>
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -207,8 +207,8 @@ export default function Visualizer() {
             </div>
           </div>
 
-          <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-            <h2 className="text-xl font-bold mb-4">Add Piece</h2>
+          <div className="bg-white rounded-lg shadow-md p-4 sm:p-6 mb-4 sm:mb-6">
+            <h2 className="text-lg sm:text-xl font-bold mb-4">Add Piece</h2>
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">

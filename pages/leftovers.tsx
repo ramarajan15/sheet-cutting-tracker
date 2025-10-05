@@ -35,57 +35,58 @@ export default function Leftovers() {
 
   return (
     <div>
-      <h1 className="text-3xl font-bold mb-6">Leftover & Offcut Management</h1>
+      <h1 className="text-2xl sm:text-3xl font-bold mb-4 sm:mb-6">Leftover & Offcut Management</h1>
       
       {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-        <div className="bg-white rounded-lg shadow-md p-6">
-          <h3 className="text-gray-600 text-sm font-medium">Total Leftovers</h3>
-          <p className="text-3xl font-bold text-blue-600">{leftoversData.length}</p>
-          <p className="text-sm text-gray-500 mt-1">Orders with leftovers</p>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-4 sm:mb-6">
+        <div className="bg-white rounded-lg shadow-md p-4 sm:p-6">
+          <h3 className="text-gray-600 text-xs sm:text-sm font-medium">Total Leftovers</h3>
+          <p className="text-2xl sm:text-3xl font-bold text-blue-600">{leftoversData.length}</p>
+          <p className="text-xs sm:text-sm text-gray-500 mt-1">Orders with leftovers</p>
         </div>
-        <div className="bg-white rounded-lg shadow-md p-6">
-          <h3 className="text-gray-600 text-sm font-medium">Total Leftover Area</h3>
-          <p className="text-3xl font-bold text-orange-600">{totalLeftoverArea.toFixed(2)} m²</p>
-          <p className="text-sm text-gray-500 mt-1">Unused material area</p>
+        <div className="bg-white rounded-lg shadow-md p-4 sm:p-6">
+          <h3 className="text-gray-600 text-xs sm:text-sm font-medium">Total Leftover Area</h3>
+          <p className="text-2xl sm:text-3xl font-bold text-orange-600">{totalLeftoverArea.toFixed(2)} m²</p>
+          <p className="text-xs sm:text-sm text-gray-500 mt-1">Unused material area</p>
         </div>
-        <div className="bg-white rounded-lg shadow-md p-6">
-          <h3 className="text-gray-600 text-sm font-medium">Offcuts Reused</h3>
-          <p className="text-3xl font-bold text-green-600">{offcutsUsed}</p>
-          <p className="text-sm text-gray-500 mt-1">Successfully reused offcuts</p>
+        <div className="bg-white rounded-lg shadow-md p-4 sm:p-6">
+          <h3 className="text-gray-600 text-xs sm:text-sm font-medium">Offcuts Reused</h3>
+          <p className="text-2xl sm:text-3xl font-bold text-green-600">{offcutsUsed}</p>
+          <p className="text-xs sm:text-sm text-gray-500 mt-1">Successfully reused offcuts</p>
         </div>
       </div>
 
       {/* Leftovers Table */}
-      <div className="bg-white rounded-lg shadow-md p-6">
-        <h2 className="text-xl font-bold mb-4">Leftover Details</h2>
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Order Ref</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Material</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Customer</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Parent Sheet</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Factory</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Piece Size</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Area Used</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Leftover Area</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Offcut Used?</th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {leftoversData.map((row, index) => (
-                <tr key={index} className="hover:bg-gray-50">
-                  <td className="px-4 py-4 whitespace-nowrap text-sm font-medium text-blue-600">{row['Order Ref']}</td>
-                  <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">{row.Date}</td>
-                  <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">{row.Material}</td>
-                  <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">{row.Customer}</td>
-                  <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500">
+      <div className="bg-white rounded-lg shadow-md p-4 sm:p-6">
+        <h2 className="text-lg sm:text-xl font-bold mb-4">Leftover Details</h2>
+        <div className="overflow-x-auto -mx-4 sm:mx-0">
+          <div className="inline-block min-w-full align-middle px-4 sm:px-0">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-2 sm:px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Order Ref</th>
+                  <th className="px-2 sm:px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                  <th className="px-2 sm:px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Material</th>
+                  <th className="px-2 sm:px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Customer</th>
+                  <th className="px-2 sm:px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Parent Sheet</th>
+                  <th className="px-2 sm:px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Factory</th>
+                  <th className="px-2 sm:px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Piece Size</th>
+                  <th className="px-2 sm:px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Area Used</th>
+                  <th className="px-2 sm:px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Leftover Area</th>
+                  <th className="px-2 sm:px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Offcut Used?</th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {leftoversData.map((row, index) => (
+                  <tr key={index} className="hover:bg-gray-50">
+                  <td className="px-2 sm:px-4 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm font-medium text-blue-600">{row['Order Ref']}</td>
+                  <td className="px-2 sm:px-4 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-900">{row.Date}</td>
+                  <td className="px-2 sm:px-4 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-900">{row.Material}</td>
+                  <td className="px-2 sm:px-4 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-900">{row.Customer}</td>
+                  <td className="px-2 sm:px-4 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500">
                     {row['Sheet ID'] || '-'}
                   </td>
-                  <td className="px-4 py-4 text-sm text-gray-900">
+                  <td className="px-2 sm:px-4 py-3 sm:py-4 text-xs sm:text-sm text-gray-900">
                     {row['Factory Name'] ? (
                       <div>
                         <div className="font-medium">{row['Factory Name']}</div>
@@ -95,12 +96,12 @@ export default function Leftovers() {
                       <span className="text-gray-400">-</span>
                     )}
                   </td>
-                  <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">{row['Piece Size (mm)']}</td>
-                  <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">{row['Total Area Used (m²)']?.toFixed(2)} m²</td>
-                  <td className="px-4 py-4 whitespace-nowrap text-sm font-medium text-orange-600">
+                  <td className="px-2 sm:px-4 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-900">{row['Piece Size (mm)']}</td>
+                  <td className="px-2 sm:px-4 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-900">{row['Total Area Used (m²)']?.toFixed(2)} m²</td>
+                  <td className="px-2 sm:px-4 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm font-medium text-orange-600">
                     {row['Leftover Area (m²)']?.toFixed(2)} m²
                   </td>
-                  <td className="px-4 py-4 whitespace-nowrap text-sm">
+                  <td className="px-2 sm:px-4 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm">
                     <span className={`px-2 py-1 rounded-full text-xs ${
                       row['Offcut Used? (Y/N)'] === 'Y' 
                         ? 'bg-green-100 text-green-800' 
@@ -113,6 +114,7 @@ export default function Leftovers() {
               ))}
             </tbody>
           </table>
+          </div>
         </div>
       </div>
 
