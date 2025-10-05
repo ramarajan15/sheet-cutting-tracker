@@ -99,19 +99,19 @@ export default function Purchases() {
   };
 
   const handleSaveAdd = () => {
-    if (!formData.id || !formData.factoryId || !formData.material) {
-      alert('Please fill in required fields (ID, Factory, Material)');
+    if (!formData.factoryId || !formData.material) {
+      alert('Please fill in required fields (ID, Supplier, Material)');
       return;
     }
 
     const totalCost = calculateTotalCost(formData.qty || 0, formData.unitCost || 0);
-    const factoryName = getFactoryName(formData.factoryId || '');
+    const supplierName = getSupplierName(formData.factoryId || '');
 
     const newPurchase: Purchase = {
       id: formData.id!,
       date: formData.date || new Date().toISOString().split('T')[0],
       factoryId: formData.factoryId!,
-      factoryName,
+      factoryName: supplierName,
       material: formData.material!,
       size: formData.size || '',
       thickness: formData.thickness || '',
@@ -128,15 +128,15 @@ export default function Purchases() {
 
   const handleSaveEdit = () => {
     if (!formData.id || !formData.factoryId || !formData.material) {
-      alert('Please fill in required fields (ID, Factory, Material)');
+      alert('Please fill in required fields (ID, Supplier, Material)');
       return;
     }
 
     const totalCost = calculateTotalCost(formData.qty || 0, formData.unitCost || 0);
-    const factoryName = getFactoryName(formData.factoryId || '');
+    const supplierName = getSupplierName(formData.factoryId || '');
 
     const updatedPurchases = purchases.map(p =>
-      p.id === currentPurchase?.id ? { ...formData as Purchase, totalCost, factoryName } : p
+      p.id === currentPurchase?.id ? { ...formData as Purchase, totalCost, factoryName: supplierName } : p
     );
 
     setPurchases(updatedPurchases);
@@ -154,7 +154,7 @@ export default function Purchases() {
   const handleExport = () => {
     exportToExcel('SheetCuttingBusinessTemplate_Export.xlsx', {
       purchases,
-      factories
+      factories: suppliers
     });
   };
 
@@ -207,17 +207,17 @@ export default function Purchases() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Filter by Factory
+              Filter by Supplier
             </label>
             <select
-              value={filterFactory}
-              onChange={(e) => setFilterFactory(e.target.value)}
+              value={filterSupplier}
+              onChange={(e) => setFilterSupplier(e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
             >
-              <option value="all">All Factories</option>
-              {factories.map(factory => (
-                <option key={factory.id} value={factory.id}>
-                  {factory.name}
+              <option value="all">All Suppliers</option>
+              {suppliers.map(supplier => (
+                <option key={supplier.id} value={supplier.id}>
+                  {supplier.name}
                 </option>
               ))}
             </select>
@@ -247,7 +247,7 @@ export default function Purchases() {
         <div className="px-6 py-4 bg-gray-50 border-b border-gray-200">
           <h2 className="text-xl font-bold text-gray-800">Incoming Stock Purchases</h2>
           <p className="text-sm text-gray-600 mt-1">
-            Track all incoming stock from factories with complete traceability (date, factory, material, size, qty, cost, batch reference)
+            Track all incoming stock from suppliers with complete traceability (date, supplier, material, size, qty, cost, batch reference)
           </p>
         </div>
         <div className="overflow-x-auto">
@@ -256,7 +256,7 @@ export default function Purchases() {
               <tr>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Purchase ID</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Factory</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Supplier</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Material</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Size (mm)</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Thickness</th>
@@ -277,7 +277,7 @@ export default function Purchases() {
                     {purchase.date}
                   </td>
                   <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
-                    <div className="font-medium">{getFactoryName(purchase.factoryId)}</div>
+                    <div className="font-medium">{getSupplierName(purchase.factoryId)}</div>
                     <div className="text-xs text-gray-500">{purchase.factoryId}</div>
                   </td>
                   <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
@@ -344,7 +344,7 @@ export default function Purchases() {
                 Purchase data is loaded from the &apos;Purchases&apos; sheet in the Excel file. Each purchase represents incoming stock and includes:
               </p>
               <ul className="list-disc list-inside space-y-1 ml-4">
-                <li>Factory/supplier source for complete traceability</li>
+                <li>Supplier source for complete traceability</li>
                 <li>Material type, size, and quantity</li>
                 <li>Cost information (unit and total)</li>
                 <li>Batch/reference number for tracking</li>
@@ -381,15 +381,15 @@ export default function Purchases() {
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Factory *</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Supplier *</label>
               <select
                 value={formData.factoryId}
                 onChange={(e) => setFormData({ ...formData, factoryId: e.target.value })}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
-                <option value="">Select Factory</option>
-                {factories.map(factory => (
-                  <option key={factory.id} value={factory.id}>{factory.name}</option>
+                <option value="">Select Supplier</option>
+                {suppliers.map(supplier => (
+                  <option key={supplier.id} value={supplier.id}>{supplier.name}</option>
                 ))}
               </select>
             </div>
@@ -520,14 +520,14 @@ export default function Purchases() {
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Factory *</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Supplier *</label>
               <select
                 value={formData.factoryId}
                 onChange={(e) => setFormData({ ...formData, factoryId: e.target.value })}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
-                {factories.map(factory => (
-                  <option key={factory.id} value={factory.id}>{factory.name}</option>
+                {suppliers.map(supplier => (
+                  <option key={supplier.id} value={supplier.id}>{supplier.name}</option>
                 ))}
               </select>
             </div>
