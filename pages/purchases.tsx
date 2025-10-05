@@ -336,7 +336,7 @@ export default function Purchases() {
                     {purchase.qty}
                   </td>
                   <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
-                    ₹{purchase.unitCost.toFixed(2)}
+                    ₹{(purchase.unitCost || 0).toFixed(2)}
                   </td>
                   <td className="px-4 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                     ₹{purchase.totalCost.toFixed(2)}

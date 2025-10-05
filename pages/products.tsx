@@ -71,6 +71,7 @@ export default function Products() {
       const aVal = a[sortField];
       const bVal = b[sortField];
       const modifier = sortDirection === 'asc' ? 1 : -1;
+      if (aVal === undefined || bVal === undefined) return 0;
       if (aVal < bVal) return -1 * modifier;
       if (aVal > bVal) return 1 * modifier;
       return 0;
