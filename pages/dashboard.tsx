@@ -49,29 +49,29 @@ export default function Dashboard() {
 
   return (
     <div>
-      <h1 className="text-3xl font-bold mb-6">Dashboard</h1>
+      <h1 className="text-2xl sm:text-3xl font-bold mb-4 sm:mb-6">Dashboard</h1>
       
       {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <div className="bg-white rounded-lg shadow-md p-6">
-          <h3 className="text-gray-600 text-sm font-medium">Total Orders</h3>
-          <p className="text-3xl font-bold text-blue-600">{data.length}</p>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-6 sm:mb-8">
+        <div className="bg-white rounded-lg shadow-md p-4 sm:p-6">
+          <h3 className="text-gray-600 text-xs sm:text-sm font-medium">Total Orders</h3>
+          <p className="text-2xl sm:text-3xl font-bold text-blue-600">{data.length}</p>
         </div>
-        <div className="bg-white rounded-lg shadow-md p-6">
-          <h3 className="text-gray-600 text-sm font-medium">Total Area Used (m²)</h3>
-          <p className="text-3xl font-bold text-green-600">{totalArea.toFixed(2)} m²</p>
+        <div className="bg-white rounded-lg shadow-md p-4 sm:p-6">
+          <h3 className="text-gray-600 text-xs sm:text-sm font-medium">Total Area Used (m²)</h3>
+          <p className="text-2xl sm:text-3xl font-bold text-green-600">{totalArea.toFixed(2)} m²</p>
         </div>
-        <div className="bg-white rounded-lg shadow-md p-6">
-          <h3 className="text-gray-600 text-sm font-medium">Total Profit (₹)</h3>
-          <p className="text-3xl font-bold text-purple-600">₹{totalProfit.toFixed(2)}</p>
+        <div className="bg-white rounded-lg shadow-md p-4 sm:p-6">
+          <h3 className="text-gray-600 text-xs sm:text-sm font-medium">Total Profit (₹)</h3>
+          <p className="text-2xl sm:text-3xl font-bold text-purple-600">₹{totalProfit.toFixed(2)}</p>
         </div>
       </div>
 
       {/* Charts */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
         {/* Material Distribution Pie Chart */}
-        <div className="bg-white rounded-lg shadow-md p-6">
-          <h2 className="text-xl font-bold mb-4">Material Usage Distribution</h2>
+        <div className="bg-white rounded-lg shadow-md p-4 sm:p-6">
+          <h2 className="text-lg sm:text-xl font-bold mb-4">Material Usage Distribution</h2>
           {materialData.length > 0 ? (
             <ResponsiveContainer width="100%" height={300}>
               <PieChart>
@@ -98,16 +98,16 @@ export default function Dashboard() {
         </div>
 
         {/* Orders by Material Bar Chart */}
-        <div className="bg-white rounded-lg shadow-md p-6">
-          <h2 className="text-xl font-bold mb-4">Orders by Material</h2>
+        <div className="bg-white rounded-lg shadow-md p-4 sm:p-6">
+          <h2 className="text-lg sm:text-xl font-bold mb-4">Orders by Material</h2>
           {materialData.length > 0 ? (
             <ResponsiveContainer width="100%" height={300}>
               <BarChart data={materialData}>
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="name" />
-                <YAxis />
+                <XAxis dataKey="name" tick={{ fontSize: 12 }} />
+                <YAxis tick={{ fontSize: 12 }} />
                 <Tooltip />
-                <Legend />
+                <Legend wrapperStyle={{ fontSize: '14px' }} />
                 <Bar dataKey="value" fill="#8884d8" name="Area (m²)" />
               </BarChart>
             </ResponsiveContainer>
@@ -118,31 +118,33 @@ export default function Dashboard() {
       </div>
 
       {/* Recent Orders */}
-      <div className="bg-white rounded-lg shadow-md p-6 mt-6">
-        <h2 className="text-xl font-bold mb-4">Recent Orders</h2>
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Customer</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Material</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Order Ref</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Profit (₹)</th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {data.slice(0, 5).map((row, index) => (
-                <tr key={index}>
-                  <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">{row.Date}</td>
-                  <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">{row.Customer}</td>
-                  <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">{row.Material}</td>
-                  <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">{row['Order Ref']}</td>
-                  <td className="px-4 py-4 whitespace-nowrap text-sm text-green-600 font-medium">₹{row.Profit?.toFixed(2)}</td>
+      <div className="bg-white rounded-lg shadow-md p-4 sm:p-6 mt-4 sm:mt-6">
+        <h2 className="text-lg sm:text-xl font-bold mb-4">Recent Orders</h2>
+        <div className="overflow-x-auto -mx-4 sm:mx-0">
+          <div className="inline-block min-w-full align-middle px-4 sm:px-0">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-2 sm:px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                  <th className="px-2 sm:px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Customer</th>
+                  <th className="px-2 sm:px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Material</th>
+                  <th className="px-2 sm:px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Order Ref</th>
+                  <th className="px-2 sm:px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Profit (₹)</th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {data.slice(0, 5).map((row, index) => (
+                  <tr key={index}>
+                    <td className="px-2 sm:px-4 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-900">{row.Date}</td>
+                    <td className="px-2 sm:px-4 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-900">{row.Customer}</td>
+                    <td className="px-2 sm:px-4 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-900">{row.Material}</td>
+                    <td className="px-2 sm:px-4 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-900">{row['Order Ref']}</td>
+                  <td className="px-2 sm:px-4 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-green-600 font-medium">₹{row.Profit?.toFixed(2)}</td>
                 </tr>
               ))}
             </tbody>
           </table>
+          </div>
         </div>
       </div>
     </div>

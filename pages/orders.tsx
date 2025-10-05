@@ -184,22 +184,22 @@ export default function Orders() {
 
   return (
     <div>
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold">Orders Management</h1>
-        <div className="flex items-center gap-4">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-4 sm:mb-6">
+        <h1 className="text-2xl sm:text-3xl font-bold">Orders Management</h1>
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4">
           <button
             onClick={handleExport}
-            className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-md font-medium transition-colors"
+            className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-md font-medium transition-colors text-sm sm:text-base"
           >
             Export to Excel
           </button>
           <button
             onClick={handleAdd}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md font-medium transition-colors"
+            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md font-medium transition-colors text-sm sm:text-base"
           >
             + Add New Order
           </button>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
             <label htmlFor="material-filter" className="text-sm font-medium text-gray-700">
               Filter by Material:
             </label>
@@ -207,7 +207,7 @@ export default function Orders() {
               id="material-filter"
               value={filterMaterial}
               onChange={(e) => setFilterMaterial(e.target.value)}
-              className="border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
             >
               <option value="all">All Materials</option>
               {materials.map((material) => (
@@ -221,89 +221,91 @@ export default function Orders() {
       </div>
 
       {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-        <div className="bg-white rounded-lg shadow-md p-4">
-          <h3 className="text-gray-600 text-sm font-medium">Total Orders</h3>
-          <p className="text-2xl font-bold text-blue-600">{filteredOrders.length}</p>
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-4 sm:mb-6">
+        <div className="bg-white rounded-lg shadow-md p-3 sm:p-4">
+          <h3 className="text-gray-600 text-xs sm:text-sm font-medium">Total Orders</h3>
+          <p className="text-xl sm:text-2xl font-bold text-blue-600">{filteredOrders.length}</p>
         </div>
-        <div className="bg-white rounded-lg shadow-md p-4">
-          <h3 className="text-gray-600 text-sm font-medium">Total Revenue (₹)</h3>
-          <p className="text-2xl font-bold text-green-600">
+        <div className="bg-white rounded-lg shadow-md p-3 sm:p-4">
+          <h3 className="text-gray-600 text-xs sm:text-sm font-medium">Total Revenue (₹)</h3>
+          <p className="text-xl sm:text-2xl font-bold text-green-600">
             ₹{filteredOrders.reduce((sum, row) => sum + (row.totalSale || 0), 0).toFixed(2)}
           </p>
         </div>
-        <div className="bg-white rounded-lg shadow-md p-4">
-          <h3 className="text-gray-600 text-sm font-medium">Total Cost (₹)</h3>
-          <p className="text-2xl font-bold text-orange-600">
+        <div className="bg-white rounded-lg shadow-md p-3 sm:p-4">
+          <h3 className="text-gray-600 text-xs sm:text-sm font-medium">Total Cost (₹)</h3>
+          <p className="text-xl sm:text-2xl font-bold text-orange-600">
             ₹{filteredOrders.reduce((sum, row) => sum + (row.totalCost || 0), 0).toFixed(2)}
           </p>
         </div>
-        <div className="bg-white rounded-lg shadow-md p-4">
-          <h3 className="text-gray-600 text-sm font-medium">Total Profit (₹)</h3>
-          <p className="text-2xl font-bold text-purple-600">
+        <div className="bg-white rounded-lg shadow-md p-3 sm:p-4">
+          <h3 className="text-gray-600 text-xs sm:text-sm font-medium">Total Profit (₹)</h3>
+          <p className="text-xl sm:text-2xl font-bold text-purple-600">
             ₹{filteredOrders.reduce((sum, row) => sum + (row.profit || 0), 0).toFixed(2)}
           </p>
         </div>
       </div>
 
       {/* Orders Table */}
-      <div className="bg-white rounded-lg shadow-md p-6">
-        <h2 className="text-xl font-bold mb-4">Order Details</h2>
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Order Ref</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Customer</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Material</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Size (mm)</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Qty</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total Cost (₹)</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total Sale (₹)</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Profit (₹)</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {filteredOrders.map((order) => (
-                <tr key={order.id} className="hover:bg-gray-50">
-                  <td className="px-4 py-4 whitespace-nowrap text-sm font-medium text-blue-600">{order.orderRef}</td>
-                  <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">{order.date}</td>
-                  <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {order.customerName || getCustomerName(order.customerId)}
-                    <div className="text-xs text-gray-500">{order.customerId}</div>
-                  </td>
-                  <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">{order.material}</td>
-                  <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">{order.pieceSize}</td>
-                  <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">{order.qty}</td>
-                  <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">₹{(order.totalCost || 0).toFixed(2)}</td>
-                  <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">₹{(order.totalSale || 0).toFixed(2)}</td>
-                  <td className="px-4 py-4 whitespace-nowrap text-sm text-green-600 font-medium">₹{(order.profit || 0).toFixed(2)}</td>
-                  <td className="px-4 py-4 whitespace-nowrap text-sm">
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => handleEdit(order)}
-                        className="text-blue-600 hover:text-blue-800 font-medium"
-                      >
-                        Edit
-                      </button>
-                      <button
-                        onClick={() => handleDelete(order)}
-                        className="text-red-600 hover:text-red-800 font-medium"
-                      >
-                        Delete
-                      </button>
-                    </div>
-                  </td>
+      <div className="bg-white rounded-lg shadow-md p-4 sm:p-6">
+        <h2 className="text-lg sm:text-xl font-bold mb-4">Order Details</h2>
+        <div className="overflow-x-auto -mx-4 sm:mx-0">
+          <div className="inline-block min-w-full align-middle px-4 sm:px-0">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-2 sm:px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Order Ref</th>
+                  <th className="px-2 sm:px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                  <th className="px-2 sm:px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Customer</th>
+                  <th className="px-2 sm:px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Material</th>
+                  <th className="px-2 sm:px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Size (mm)</th>
+                  <th className="px-2 sm:px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Qty</th>
+                  <th className="px-2 sm:px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total Cost (₹)</th>
+                  <th className="px-2 sm:px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total Sale (₹)</th>
+                  <th className="px-2 sm:px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Profit (₹)</th>
+                  <th className="px-2 sm:px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {filteredOrders.map((order) => (
+                  <tr key={order.id} className="hover:bg-gray-50">
+                    <td className="px-2 sm:px-4 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm font-medium text-blue-600">{order.orderRef}</td>
+                    <td className="px-2 sm:px-4 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-900">{order.date}</td>
+                    <td className="px-2 sm:px-4 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-900">
+                      {order.customerName || getCustomerName(order.customerId)}
+                      <div className="text-xs text-gray-500">{order.customerId}</div>
+                    </td>
+                    <td className="px-2 sm:px-4 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-900">{order.material}</td>
+                    <td className="px-2 sm:px-4 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-900">{order.pieceSize}</td>
+                    <td className="px-2 sm:px-4 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-900">{order.qty}</td>
+                    <td className="px-2 sm:px-4 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-900">₹{(order.totalCost || 0).toFixed(2)}</td>
+                    <td className="px-2 sm:px-4 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-900">₹{(order.totalSale || 0).toFixed(2)}</td>
+                    <td className="px-2 sm:px-4 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-green-600 font-medium">₹{(order.profit || 0).toFixed(2)}</td>
+                    <td className="px-2 sm:px-4 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm">
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => handleEdit(order)}
+                          className="text-blue-600 hover:text-blue-800 font-medium"
+                        >
+                          Edit
+                        </button>
+                        <button
+                          onClick={() => handleDelete(order)}
+                          className="text-red-600 hover:text-red-800 font-medium"
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
 
-      <div className="mt-6 bg-blue-50 border-l-4 border-blue-400 p-4">
+      <div className="mt-4 sm:mt-6 bg-blue-50 border-l-4 border-blue-400 p-4">
         <div className="flex">
           <div className="flex-shrink-0">
             <svg className="h-5 w-5 text-blue-400" viewBox="0 0 20 20" fill="currentColor">
@@ -311,7 +313,7 @@ export default function Orders() {
             </svg>
           </div>
           <div className="ml-3">
-            <p className="text-sm text-blue-700">
+            <p className="text-xs sm:text-sm text-blue-700">
               Track and manage all customer orders with complete material traceability. Each order is linked to a customer and shows which sheet was used (and thus the factory/batch), enabling full end-to-end tracking from supplier to customer.
             </p>
           </div>
@@ -321,7 +323,7 @@ export default function Orders() {
       {/* Add Order Modal */}
       <Modal isOpen={isAddModalOpen} onClose={() => setIsAddModalOpen(false)} title="Add New Order" maxWidth="2xl">
         <div className="space-y-4">
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Order ID *</label>
               <input
@@ -464,7 +466,7 @@ export default function Orders() {
       {/* Edit Order Modal */}
       <Modal isOpen={isEditModalOpen} onClose={() => setIsEditModalOpen(false)} title="Edit Order" maxWidth="2xl">
         <div className="space-y-4">
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Order ID *</label>
               <input

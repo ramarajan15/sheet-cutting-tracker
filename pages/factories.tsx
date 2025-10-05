@@ -144,18 +144,18 @@ export default function Factories() {
 
   return (
     <div>
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold">Factory/Supplier Management</h1>
-        <div className="flex gap-2">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-4 sm:mb-6">
+        <h1 className="text-2xl sm:text-3xl font-bold">Factory/Supplier Management</h1>
+        <div className="flex flex-col sm:flex-row gap-2">
           <button
             onClick={handleExport}
-            className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-md font-medium transition-colors"
+            className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-md font-medium transition-colors text-sm sm:text-base"
           >
             Export to Excel
           </button>
           <button
             onClick={handleAdd}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md font-medium transition-colors"
+            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md font-medium transition-colors text-sm sm:text-base"
           >
             + Add New Factory
           </button>
@@ -163,28 +163,28 @@ export default function Factories() {
       </div>
       
       {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-        <div className="bg-blue-50 rounded-lg shadow-md p-6">
-          <h3 className="text-sm font-medium text-blue-600 uppercase tracking-wide">Total Factories</h3>
-          <p className="text-3xl font-bold text-blue-900 mt-2">{factories.length}</p>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-4 sm:mb-6">
+        <div className="bg-blue-50 rounded-lg shadow-md p-4 sm:p-6">
+          <h3 className="text-xs sm:text-sm font-medium text-blue-600 uppercase tracking-wide">Total Factories</h3>
+          <p className="text-2xl sm:text-3xl font-bold text-blue-900 mt-2">{factories.length}</p>
         </div>
-        <div className="bg-green-50 rounded-lg shadow-md p-6">
-          <h3 className="text-sm font-medium text-green-600 uppercase tracking-wide">Total Purchases</h3>
-          <p className="text-3xl font-bold text-green-900 mt-2">{purchases.length}</p>
+        <div className="bg-green-50 rounded-lg shadow-md p-4 sm:p-6">
+          <h3 className="text-xs sm:text-sm font-medium text-green-600 uppercase tracking-wide">Total Purchases</h3>
+          <p className="text-2xl sm:text-3xl font-bold text-green-900 mt-2">{purchases.length}</p>
         </div>
-        <div className="bg-purple-50 rounded-lg shadow-md p-6">
-          <h3 className="text-sm font-medium text-purple-600 uppercase tracking-wide">Total Spent</h3>
-          <p className="text-3xl font-bold text-purple-900 mt-2">
+        <div className="bg-purple-50 rounded-lg shadow-md p-4 sm:p-6">
+          <h3 className="text-xs sm:text-sm font-medium text-purple-600 uppercase tracking-wide">Total Spent</h3>
+          <p className="text-2xl sm:text-3xl font-bold text-purple-900 mt-2">
             ${purchases.reduce((total, p) => total + (p.totalCost || 0), 0).toFixed(2)}
           </p>
         </div>
       </div>
 
       {/* Factories Table */}
-      <div className="bg-white rounded-lg shadow-md overflow-hidden mb-6">
-        <div className="px-6 py-4 bg-gray-50 border-b border-gray-200">
-          <h2 className="text-xl font-bold text-gray-800">Factory Profiles</h2>
-          <p className="text-sm text-gray-600 mt-1">
+      <div className="bg-white rounded-lg shadow-md overflow-hidden mb-4 sm:mb-6">
+        <div className="px-4 sm:px-6 py-4 bg-gray-50 border-b border-gray-200">
+          <h2 className="text-lg sm:text-xl font-bold text-gray-800">Factory Profiles</h2>
+          <p className="text-xs sm:text-sm text-gray-600 mt-1">
             Track supplier/factory information and materials supplied
           </p>
         </div>

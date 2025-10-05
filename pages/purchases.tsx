@@ -168,18 +168,18 @@ export default function Purchases() {
 
   return (
     <div>
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold">Purchase Management</h1>
-        <div className="flex gap-2">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-4 sm:mb-6">
+        <h1 className="text-2xl sm:text-3xl font-bold">Purchase Management</h1>
+        <div className="flex flex-col sm:flex-row gap-2">
           <button
             onClick={handleExport}
-            className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-md font-medium transition-colors"
+            className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-md font-medium transition-colors text-sm sm:text-base"
           >
             Export to Excel
           </button>
           <button
             onClick={handleAdd}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md font-medium transition-colors"
+            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md font-medium transition-colors text-sm sm:text-base"
           >
             + Add New Purchase
           </button>
@@ -187,7 +187,7 @@ export default function Purchases() {
       </div>
       
       {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-4 sm:mb-6">
         <div className="bg-blue-50 rounded-lg shadow-md p-6">
           <h3 className="text-sm font-medium text-blue-600 uppercase tracking-wide">Total Purchases</h3>
           <p className="text-3xl font-bold text-blue-900 mt-2">{totalPurchases}</p>
