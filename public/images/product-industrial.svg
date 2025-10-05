@@ -1,0 +1,7 @@
+<svg width="400" height="300" xmlns="http://www.w3.org/2000/svg">
+  <rect width="400" height="300" fill="#f3f4f6"/>
+  <rect x="50" y="50" width="300" height="200" fill="#fbbf24" stroke="#f59e0b" stroke-width="2"/>
+  <rect x="80" y="80" width="240" height="140" fill="#fcd34d"/>
+  <text x="200" y="160" font-family="Arial, sans-serif" font-size="18" font-weight="bold" fill="#78350f" text-anchor="middle">Industrial</text>
+  <text x="200" y="185" font-family="Arial, sans-serif" font-size="14" fill="#92400e" text-anchor="middle">Laminates</text>
+</svg>

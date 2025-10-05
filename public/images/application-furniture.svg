@@ -1,0 +1,8 @@
+<svg width="400" height="300" xmlns="http://www.w3.org/2000/svg">
+  <rect width="400" height="300" fill="#fef3c7"/>
+  <rect x="100" y="80" width="200" height="20" fill="#92400e" rx="2"/>
+  <rect x="120" y="100" width="160" height="120" fill="#d97706" rx="4"/>
+  <rect x="140" y="220" width="40" height="60" fill="#92400e"/>
+  <rect x="220" y="220" width="40" height="60" fill="#92400e"/>
+  <text x="200" y="270" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="#78350f" text-anchor="middle">Furniture</text>
+</svg>
