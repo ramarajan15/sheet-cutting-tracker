@@ -310,3 +310,56 @@ export const getMaterialsByFactory = (factories: Factory[]): Record<string, stri
   
   return materials;
 };
+
+/**
+ * Export data to Excel file with multiple sheets
+ */
+export const exportToExcel = (
+  filename: string,
+  data: {
+    customers?: Customer[];
+    factories?: Factory[];
+    purchases?: Purchase[];
+    orders?: Order[];
+    stock?: StockSheet[];
+    leftovers?: Leftover[];
+  }
+): void => {
+  try {
+    const workbook = XLSX.utils.book_new();
+
+    if (data.customers) {
+      const customersSheet = XLSX.utils.json_to_sheet(data.customers);
+      XLSX.utils.book_append_sheet(workbook, customersSheet, 'Customers');
+    }
+
+    if (data.factories) {
+      const factoriesSheet = XLSX.utils.json_to_sheet(data.factories);
+      XLSX.utils.book_append_sheet(workbook, factoriesSheet, 'Factories');
+    }
+
+    if (data.purchases) {
+      const purchasesSheet = XLSX.utils.json_to_sheet(data.purchases);
+      XLSX.utils.book_append_sheet(workbook, purchasesSheet, 'Purchases');
+    }
+
+    if (data.orders) {
+      const ordersSheet = XLSX.utils.json_to_sheet(data.orders);
+      XLSX.utils.book_append_sheet(workbook, ordersSheet, 'Orders');
+    }
+
+    if (data.stock) {
+      const stockSheet = XLSX.utils.json_to_sheet(data.stock);
+      XLSX.utils.book_append_sheet(workbook, stockSheet, 'Stock');
+    }
+
+    if (data.leftovers) {
+      const leftoversSheet = XLSX.utils.json_to_sheet(data.leftovers);
+      XLSX.utils.book_append_sheet(workbook, leftoversSheet, 'Leftovers');
+    }
+
+    XLSX.writeFile(workbook, filename);
+  } catch (error) {
+    console.error('Error exporting to Excel:', error);
+  }
+};
