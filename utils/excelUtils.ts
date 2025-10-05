@@ -1,5 +1,91 @@
 import * as XLSX from 'xlsx';
 
+// Core data interfaces for traceability
+export interface Customer {
+  id: string;
+  name: string;
+  email?: string;
+  phone?: string;
+  address?: string;
+  notes?: string;
+}
+
+export interface Factory {
+  id: string;
+  name: string;
+  location?: string;
+  contact?: string;
+  email?: string;
+  phone?: string;
+  materials?: string[];
+  notes?: string;
+}
+
+export interface Purchase {
+  id: string;
+  date: string;
+  factoryId: string;
+  factoryName?: string;
+  material: string;
+  size: string; // e.g., "2440x1220"
+  thickness?: string;
+  qty: number;
+  unitCost: number;
+  totalCost: number;
+  batchRef?: string;
+  notes?: string;
+}
+
+export interface StockSheet {
+  id: string;
+  purchaseId: string;
+  factoryId: string;
+  material: string;
+  size: string;
+  thickness?: string;
+  dateReceived: string;
+  batchRef?: string;
+  status: 'available' | 'in-use' | 'used' | 'leftover';
+  notes?: string;
+}
+
+export interface Order {
+  id: string;
+  orderRef: string;
+  date: string;
+  customerId: string;
+  customerName?: string;
+  sheetId?: string;
+  material: string;
+  pieceSize: string;
+  qty: number;
+  areaPerPiece?: number;
+  totalAreaUsed?: number;
+  unitCost?: number;
+  unitSalePrice?: number;
+  totalCost?: number;
+  totalSale?: number;
+  profit?: number;
+  notes?: string;
+}
+
+export interface Leftover {
+  id: string;
+  parentSheetId: string;
+  purchaseId?: string;
+  factoryId?: string;
+  material: string;
+  length: number;
+  width: number;
+  thickness?: string;
+  area: number;
+  dateCreated: string;
+  fromOrderRef?: string;
+  status: 'available' | 'used';
+  notes?: string;
+}
+
+// Legacy SheetData interface for backward compatibility
 export interface SheetData {
   Material?: string;
   Date?: string;
@@ -18,6 +104,13 @@ export interface SheetData {
   'Leftover Area (m²)'?: number;
   'Offcut Used? (Y/N)'?: string;
   Notes?: string;
+  // Extended fields for traceability
+  'Customer ID'?: string;
+  'Sheet ID'?: string;
+  'Purchase ID'?: string;
+  'Factory ID'?: string;
+  'Factory Name'?: string;
+  'Batch Ref'?: string;
 }
 
 /**
@@ -42,6 +135,69 @@ export const readExcelFile = async (filename: string): Promise<SheetData[]> => {
     console.error('Error reading Excel file:', error);
     return [];
   }
+};
+
+/**
+ * Read a specific sheet from Excel file
+ */
+export const readExcelSheet = async <T>(filename: string, sheetName: string): Promise<T[]> => {
+  try {
+    const response = await fetch(`/${filename}`);
+    const arrayBuffer = await response.arrayBuffer();
+    const workbook = XLSX.read(arrayBuffer, { type: 'array' });
+    
+    if (workbook.SheetNames.includes(sheetName)) {
+      const worksheet = workbook.Sheets[sheetName];
+      const data = XLSX.utils.sheet_to_json<T>(worksheet);
+      return data;
+    }
+    return [];
+  } catch (error) {
+    console.error(`Error reading sheet ${sheetName} from Excel file:`, error);
+    return [];
+  }
+};
+
+/**
+ * Read customers from Excel file
+ */
+export const readCustomers = async (filename: string): Promise<Customer[]> => {
+  return readExcelSheet<Customer>(filename, 'Customers');
+};
+
+/**
+ * Read factories from Excel file
+ */
+export const readFactories = async (filename: string): Promise<Factory[]> => {
+  return readExcelSheet<Factory>(filename, 'Factories');
+};
+
+/**
+ * Read purchases from Excel file
+ */
+export const readPurchases = async (filename: string): Promise<Purchase[]> => {
+  return readExcelSheet<Purchase>(filename, 'Purchases');
+};
+
+/**
+ * Read stock sheets from Excel file
+ */
+export const readStockSheets = async (filename: string): Promise<StockSheet[]> => {
+  return readExcelSheet<StockSheet>(filename, 'Stock');
+};
+
+/**
+ * Read orders from Excel file
+ */
+export const readOrders = async (filename: string): Promise<Order[]> => {
+  return readExcelSheet<Order>(filename, 'Orders');
+};
+
+/**
+ * Read leftovers from Excel file
+ */
+export const readLeftovers = async (filename: string): Promise<Leftover[]> => {
+  return readExcelSheet<Leftover>(filename, 'Leftovers');
 };
 
 /**
@@ -99,4 +255,58 @@ export const getStockByMaterial = (data: SheetData[]): Record<string, number> =>
   });
   
   return summary;
+};
+
+/**
+ * Get orders by customer
+ */
+export const getOrdersByCustomer = (orders: Order[]): Record<string, Order[]> => {
+  const grouped: Record<string, Order[]> = {};
+  
+  orders.forEach((order) => {
+    const customerId = order.customerId || 'Unknown';
+    if (!grouped[customerId]) {
+      grouped[customerId] = [];
+    }
+    grouped[customerId].push(order);
+  });
+  
+  return grouped;
+};
+
+/**
+ * Get purchases by factory
+ */
+export const getPurchasesByFactory = (purchases: Purchase[]): Record<string, Purchase[]> => {
+  const grouped: Record<string, Purchase[]> = {};
+  
+  purchases.forEach((purchase) => {
+    const factoryId = purchase.factoryId || 'Unknown';
+    if (!grouped[factoryId]) {
+      grouped[factoryId] = [];
+    }
+    grouped[factoryId].push(purchase);
+  });
+  
+  return grouped;
+};
+
+/**
+ * Calculate total spent with factories
+ */
+export const calculateTotalSpent = (purchases: Purchase[]): number => {
+  return purchases.reduce((total, purchase) => total + (purchase.totalCost || 0), 0);
+};
+
+/**
+ * Get materials by factory
+ */
+export const getMaterialsByFactory = (factories: Factory[]): Record<string, string[]> => {
+  const materials: Record<string, string[]> = {};
+  
+  factories.forEach((factory) => {
+    materials[factory.id] = factory.materials || [];
+  });
+  
+  return materials;
 };
