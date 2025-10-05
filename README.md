@@ -25,9 +25,11 @@ A Next.js web application for managing and tracking sheet cutting operations for
 - **Customer Management**: Complete customer profiles with full order history and CRUD operations
 - **Factory/Supplier Management**: Track suppliers and materials they provide with full CRUD operations
 - **Purchase Management**: Incoming stock tracking with date, factory, material, size, qty, cost, and batch reference with CRUD operations
+- **Category Management**: Organize products by categories with full CRUD operations
+- **Product Management**: Complete product catalog with specifications including size (L×W×T mm), area (mm²), unit cost (₹/mm²), colour, and weight with full CRUD operations
 - **Sheet Cutting Visualizer**: Visualize and optimize sheet cutting layouts with manual and auto-arrangement
 - **End-to-End Material Traceability**: Full supply chain tracking from factory purchase to customer order
-- **CRUD Operations**: Create, Read, Update, and Delete functionality for Factories, Purchases, Customers, and Orders
+- **CRUD Operations**: Create, Read, Update, and Delete functionality for all data entities (Factories, Purchases, Customers, Orders, Categories, Products)
 - **Excel Export**: Export all data to Excel file for offline use and backup
 
 ## Technology Stack
@@ -46,6 +48,8 @@ This application uses an Excel file (`SheetCuttingBusinessTemplate.xlsx`) stored
 - **Customers**: Customer profiles and contact information
 - **Factories**: Supplier/factory profiles and materials supplied
 - **Purchases**: Incoming stock purchases with factory, date, material, size, qty, cost, and batch reference
+- **Categories**: Product categories for organization and filtering
+- **Products**: Product catalog with specifications (ID, Name, Category, Size L×W×T mm, Area mm², Unit Cost ₹/mm², Colour, Weight g)
 - **Stock**: Stock sheet inventory with purchase and factory links
 - **Orders** (enhanced): Orders with customer and sheet traceability
 - **Leftovers**: Leftover pieces linked to parent sheets with factory information
@@ -125,10 +129,13 @@ sheet-cutting-tracker/
 │   ├── customers.tsx     # Customer profiles and order history
 │   ├── factories.tsx     # Factory/supplier profiles
 │   ├── purchases.tsx     # Purchase management
+│   ├── categories.tsx    # Category management
+│   ├── products.tsx      # Product catalog management
 │   └── visualizer.tsx    # Sheet cutting visualizer
 ├── components/           # React components
 │   ├── Layout.tsx        # Main layout wrapper with home page special handling
-│   └── Navigation.tsx    # Navigation menu
+│   ├── Navigation.tsx    # Navigation menu
+│   └── Modal.tsx         # Reusable modal component
 ├── utils/                # Utility functions
 │   └── excelUtils.ts     # Excel file operations and data interfaces
 ├── public/               # Static files
@@ -258,6 +265,65 @@ Navigate to `/customers` to manage customer profiles:
 4. **View Order History**: Click "View Orders" to see all orders for a specific customer
 
 5. **Export Data**: Click "Export to Excel" to download current customer and order data
+
+### Managing Categories
+
+Navigate to `/categories` to manage product categories:
+
+1. **Add New Category**: Click the "Add New Category" button
+   - Required fields: Category ID and Name
+   - Optional field: Description
+   - Click "Add Category" to save
+
+2. **Edit Category**: Click "Edit" next to any category in the table
+   - Modify name or description (ID is locked)
+   - Click "Save Changes" to update
+
+3. **Delete Category**: Click "Delete" next to any category
+   - Confirm deletion in the popup modal
+   - Warning: Products associated with this category may be affected
+
+4. **Search and Sort**: 
+   - Use the search bar to find categories by ID, name, or description
+   - Click column headers to sort by that field (ascending/descending)
+   - Summary cards show total categories and filtered results
+
+5. **Export Data**: Click "Export to Excel" to download current category data
+
+### Managing Products
+
+Navigate to `/products` to manage your product catalog:
+
+1. **Add New Product**: Click the "Add New Product" button
+   - Required fields: Product ID, Name, Category, Length (mm), Width (mm), Thickness (mm)
+   - **Category Selection**: Choose from existing categories via dropdown
+   - **Dimensions**: Enter size in millimeters
+     - Length (mm): e.g., 2440
+     - Width (mm): e.g., 1220
+     - Thickness (mm): e.g., 1.0
+   - **Auto-calculated**: Area (mm²) = Length × Width
+   - Optional fields:
+     - Unit Cost (₹/mm²): Cost per 1mm × 1mm
+     - Colour: e.g., "Oak Brown"
+     - Weight (grams): e.g., 15000
+     - Notes: Additional product information
+   - Click "Add Product" to save
+
+2. **Edit Product**: Click "Edit" next to any product in the table
+   - Modify any fields (ID is locked)
+   - Area updates automatically when dimensions change
+   - Click "Save Changes" to update
+
+3. **Delete Product**: Click "Delete" next to any product
+   - Confirm deletion in the popup modal
+
+4. **Filter and Search**: 
+   - Use the search bar to find products by ID, name, category, or colour
+   - Filter by category using the dropdown
+   - Click column headers to sort (ID, Name, Category, Area, Unit Cost, Colour, Weight)
+   - Summary cards show product counts, categories, and average unit cost
+
+5. **Export Data**: Click "Export to Excel" to download current product and category data
 
 ### Managing Orders
 

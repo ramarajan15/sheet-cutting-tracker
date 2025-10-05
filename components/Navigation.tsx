@@ -14,6 +14,8 @@ const Navigation: React.FC = () => {
     { href: '/customers', label: 'Customers' },
     { href: '/factories', label: 'Factories' },
     { href: '/purchases', label: 'Purchases' },
+    { href: '/categories', label: 'Categories' },
+    { href: '/products', label: 'Products' },
     { href: '/visualizer', label: 'Visualizer' },
   ];
 
