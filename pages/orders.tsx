@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import { readOrders, readCustomers, readProducts, Order, OrderItem, Customer, Product, exportToExcel } from '@/utils/excelUtils';
+import { readOrders, readCustomers, readProducts, readStockSheets, Order, OrderItem, Customer, Product, StockSheet, exportToExcel } from '@/utils/excelUtils';
 import Modal from '@/components/Modal';
 
 export default function Orders() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
+  const [stockSheets, setStockSheets] = useState<StockSheet[]>([]);
   const [loading, setLoading] = useState(true);
   const [filterProduct, setFilterProduct] = useState<string>('all');
   const [productsFilter, setProductsFilter] = useState<string[]>([]);
@@ -36,9 +37,11 @@ export default function Orders() {
         const ordersData = await readOrders('SheetCuttingBusinessTemplate.xlsx');
         const customersData = await readCustomers('SheetCuttingBusinessTemplate.xlsx');
         const productsData = await readProducts('SheetCuttingBusinessTemplate.xlsx');
+        const stockData = await readStockSheets('SheetCuttingBusinessTemplate.xlsx');
         setOrders(ordersData);
         setCustomers(customersData);
         setProducts(productsData);
+        setStockSheets(stockData);
         
         // Extract unique products from all order items
         const uniqueProducts = new Set<string>();
@@ -82,6 +85,21 @@ export default function Orders() {
 
   const getProduct = (productId: string) => {
     return products.find(p => p.id === productId);
+  };
+
+  const getStockInfo = (productId: string) => {
+    // Count stock sheets for this product
+    const productSheets = stockSheets.filter(sheet => sheet.productId === productId);
+    const availableSheets = productSheets.filter(sheet => sheet.status === 'available');
+    const leftoverSheets = productSheets.filter(sheet => sheet.status === 'leftover');
+    
+    return {
+      totalSheets: productSheets.length,
+      availableSheets: availableSheets.length,
+      leftoverSheets: leftoverSheets.length,
+      hasStock: productSheets.length > 0,
+      hasLeftovers: leftoverSheets.length > 0
+    };
   };
 
   // CRUD handlers
@@ -568,10 +586,50 @@ export default function Orders() {
                         className="w-full px-2 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                       >
                         <option value="">Select Product</option>
-                        {products.map(product => (
-                          <option key={product.id} value={product.id}>{product.name}</option>
-                        ))}
+                        {products.map(product => {
+                          const stockInfo = getStockInfo(product.id);
+                          return (
+                            <option key={product.id} value={product.id}>
+                              {product.name} {stockInfo.hasLeftovers ? '(Has Leftovers)' : stockInfo.hasStock ? '(In Stock)' : '(Out of Stock)'}
+                            </option>
+                          );
+                        })}
                       </select>
+                      {item.productId && (
+                        <div className="mt-1 text-xs">
+                          {(() => {
+                            const stockInfo = getStockInfo(item.productId);
+                            if (stockInfo.hasLeftovers) {
+                              return (
+                                <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-orange-100 text-orange-800">
+                                  <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                                  </svg>
+                                  {stockInfo.leftoverSheets} leftover piece(s) available
+                                </span>
+                              );
+                            } else if (stockInfo.hasStock) {
+                              return (
+                                <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
+                                  <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                                  </svg>
+                                  {stockInfo.availableSheets} uncut sheet(s) available
+                                </span>
+                              );
+                            } else {
+                              return (
+                                <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800">
+                                  <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                                  </svg>
+                                  Out of stock
+                                </span>
+                              );
+                            }
+                          })()}
+                        </div>
+                      )}
                     </div>
                     <div>
                       <label className="block text-xs font-medium text-gray-600 mb-1">Length (mm) *</label>
@@ -759,10 +817,50 @@ export default function Orders() {
                         className="w-full px-2 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                       >
                         <option value="">Select Product</option>
-                        {products.map(product => (
-                          <option key={product.id} value={product.id}>{product.name}</option>
-                        ))}
+                        {products.map(product => {
+                          const stockInfo = getStockInfo(product.id);
+                          return (
+                            <option key={product.id} value={product.id}>
+                              {product.name} {stockInfo.hasLeftovers ? '(Has Leftovers)' : stockInfo.hasStock ? '(In Stock)' : '(Out of Stock)'}
+                            </option>
+                          );
+                        })}
                       </select>
+                      {item.productId && (
+                        <div className="mt-1 text-xs">
+                          {(() => {
+                            const stockInfo = getStockInfo(item.productId);
+                            if (stockInfo.hasLeftovers) {
+                              return (
+                                <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-orange-100 text-orange-800">
+                                  <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                                  </svg>
+                                  {stockInfo.leftoverSheets} leftover piece(s) available
+                                </span>
+                              );
+                            } else if (stockInfo.hasStock) {
+                              return (
+                                <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
+                                  <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                                  </svg>
+                                  {stockInfo.availableSheets} uncut sheet(s) available
+                                </span>
+                              );
+                            } else {
+                              return (
+                                <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800">
+                                  <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                                  </svg>
+                                  Out of stock
+                                </span>
+                              );
+                            }
+                          })()}
+                        </div>
+                      )}
                     </div>
                     <div>
                       <label className="block text-xs font-medium text-gray-600 mb-1">Length (mm) *</label>
