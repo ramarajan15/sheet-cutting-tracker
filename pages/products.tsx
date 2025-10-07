@@ -60,10 +60,13 @@ export default function Products() {
 
   // Auto-calculate unit cost when price or dimensions change
   useEffect(() => {
-    if (formData.price && formData.length && formData.width && formData.thickness) {
+    if (formData.price !== undefined && formData.price !== null && formData.length && formData.width && formData.thickness) {
       const volume = formData.length * formData.width * formData.thickness;
       const unitCost = formData.price / volume;
       setFormData(prev => ({ ...prev, unitCost }));
+    } else if (!formData.price && formData.length && formData.width && formData.thickness) {
+      // If price is 0 or empty, set unitCost to 0
+      setFormData(prev => ({ ...prev, unitCost: 0 }));
     }
   }, [formData.price, formData.length, formData.width, formData.thickness]);
 
@@ -157,7 +160,7 @@ export default function Products() {
       width: Number(formData.width),
       thickness: Number(formData.thickness),
       area: Number(formData.area),
-      price: Number(formData.price || 0),
+      price: formData.price !== undefined && formData.price !== null && formData.price !== 0 ? Number(formData.price) : undefined,
       unitCost: Number(formData.unitCost || 0),
       colour: formData.colour || '',
       weight: Number(formData.weight || 0),
@@ -189,7 +192,7 @@ export default function Products() {
       width: Number(formData.width),
       thickness: Number(formData.thickness),
       area: Number(formData.area),
-      price: Number(formData.price || 0),
+      price: formData.price !== undefined && formData.price !== null && formData.price !== 0 ? Number(formData.price) : undefined,
       unitCost: Number(formData.unitCost || 0),
       colour: formData.colour || '',
       weight: Number(formData.weight || 0),
@@ -385,7 +388,7 @@ export default function Products() {
                     {product.area.toLocaleString()}
                   </td>
                   <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
-                    ₹{(product.price || 0).toFixed(2)}
+                    ₹{(product.price || 0).toFixed(3)}
                   </td>
                   <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
                     ₹{(product.unitCost || 0).toFixed(6)}
@@ -499,7 +502,7 @@ export default function Products() {
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   placeholder="e.g., 2440"
                   min="0"
-                  step="0.01"
+                  step="0.001"
                 />
               </div>
               <div>
@@ -513,7 +516,7 @@ export default function Products() {
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   placeholder="e.g., 1220"
                   min="0"
-                  step="0.01"
+                  step="0.001"
                 />
               </div>
               <div>
@@ -527,7 +530,7 @@ export default function Products() {
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   placeholder="e.g., 1.0"
                   min="0"
-                  step="0.01"
+                  step="0.001"
                 />
               </div>
             </div>
@@ -559,7 +562,7 @@ export default function Products() {
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 placeholder="e.g., 5000"
                 min="0"
-                step="0.01"
+                step="0.001"
               />
             </div>
             <div>
@@ -682,7 +685,7 @@ export default function Products() {
                   onChange={(e) => setFormData({ ...formData, length: Number(e.target.value) })}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   min="0"
-                  step="0.01"
+                  step="0.001"
                 />
               </div>
               <div>
@@ -695,7 +698,7 @@ export default function Products() {
                   onChange={(e) => setFormData({ ...formData, width: Number(e.target.value) })}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   min="0"
-                  step="0.01"
+                  step="0.001"
                 />
               </div>
               <div>
@@ -708,7 +711,7 @@ export default function Products() {
                   onChange={(e) => setFormData({ ...formData, thickness: Number(e.target.value) })}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   min="0"
-                  step="0.01"
+                  step="0.001"
                 />
               </div>
             </div>
@@ -739,7 +742,7 @@ export default function Products() {
                 onChange={(e) => setFormData({ ...formData, price: Number(e.target.value) })}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 min="0"
-                step="0.01"
+                step="0.001"
               />
             </div>
             <div>
@@ -776,7 +779,7 @@ export default function Products() {
                 onChange={(e) => setFormData({ ...formData, weight: Number(e.target.value) })}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 min="0"
-                step="0.01"
+                step="0.001"
               />
             </div>
           </div>
