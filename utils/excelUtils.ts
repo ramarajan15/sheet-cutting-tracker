@@ -80,10 +80,13 @@ export interface OrderItem {
   productName?: string; // Product name (e.g., "Aluminium Sheet", "Stainless Steel")
   length: number; // Length in millimeters (mm)
   width: number; // Width in millimeters (mm)
+  thickness: number; // Thickness in millimeters (mm)
   qty: number; // Quantity of pieces
-  unitCost?: number; // Cost per unit in Indian Rupees (₹)
+  area?: number; // Area in cubic millimeters (mm³), calculated as thickness × length × width
+  unitCost?: number; // Cost per mm in Indian Rupees (₹/mm)
+  sheetCost?: number; // Sheet cost in Indian Rupees (₹), calculated as area × unitCost
   unitSalePrice?: number; // Sale price per unit in Indian Rupees (₹)
-  totalCost?: number; // Total cost for this line item (₹)
+  totalCost?: number; // Total cost for this line item (₹), calculated as sheetCost × qty
   totalSale?: number; // Total sale for this line item (₹)
   profit?: number; // Profit for this line item (₹)
   notes?: string; // Notes specific to this line item
@@ -275,6 +278,7 @@ const mapExcelRowToOrder = (row: any): Order => {
   const qty = row['Qty'] || row.qty || 0;
   const unitCost = row['Unit Cost'] || row.unitCost || 0;
   const unitSalePrice = row['Unit Sale Price'] || row.unitSalePrice || 0;
+  const thickness = parseFloat(row['Thickness'] || row.thickness || '0') || 0;
   
   // Parse dimensions from pieceSize (e.g., "500x300")
   let length = 0;
@@ -298,6 +302,7 @@ const mapExcelRowToOrder = (row: any): Order => {
     productName,
     length,
     width,
+    thickness,
     qty,
     unitCost,
     unitSalePrice,

@@ -119,6 +119,7 @@ export default function Orders() {
       productName: '',
       length: 0,
       width: 0,
+      thickness: 0,
       qty: 0,
       unitCost: 0,
       unitSalePrice: 0
@@ -135,6 +136,7 @@ export default function Orders() {
       productName: '',
       length: 0,
       width: 0,
+      thickness: 0,
       qty: 0,
       unitCost: 0,
       unitSalePrice: 0
@@ -148,10 +150,17 @@ export default function Orders() {
   };
 
   const calculateItemTotals = (item: OrderItem) => {
-    const totalCost = item.qty * (item.unitCost || 0);
-    const totalSale = item.qty * (item.unitSalePrice || 0);
-    const profit = totalSale - totalCost;
-    return { totalCost, totalSale, profit };
+    // Calculate area (thickness × length × width) in mm³
+    const area = (item.thickness || 0) * (item.length || 0) * (item.width || 0);
+    // Calculate sheet cost (area × unit cost) with 2 decimal places
+    const sheetCost = parseFloat((area * (item.unitCost || 0)).toFixed(2));
+    // Calculate total cost (sheet cost × quantity) with 2 decimal places
+    const totalCost = parseFloat((sheetCost * (item.qty || 0)).toFixed(2));
+    // Calculate total sale with 2 decimal places
+    const totalSale = parseFloat(((item.qty || 0) * (item.unitSalePrice || 0)).toFixed(2));
+    // Calculate profit with 2 decimal places
+    const profit = parseFloat((totalSale - totalCost).toFixed(2));
+    return { area, sheetCost, totalCost, totalSale, profit };
   };
 
   const calculateOrderTotals = (items: OrderItem[]) => {
@@ -162,7 +171,10 @@ export default function Orders() {
       totalCost += itemTotals.totalCost;
       totalSale += itemTotals.totalSale;
     });
-    const profit = totalSale - totalCost;
+    // Apply 2 decimal rounding for totals
+    totalCost = parseFloat(totalCost.toFixed(2));
+    totalSale = parseFloat(totalSale.toFixed(2));
+    const profit = parseFloat((totalSale - totalCost).toFixed(2));
     return { totalCost, totalSale, profit };
   };
 
@@ -173,6 +185,7 @@ export default function Orders() {
       productName: '',
       length: 0,
       width: 0,
+      thickness: 0,
       qty: 0,
       unitCost: 0,
       unitSalePrice: 0
@@ -209,6 +222,8 @@ export default function Orders() {
       const totals = calculateItemTotals(item);
       return {
         ...item,
+        area: totals.area,
+        sheetCost: totals.sheetCost,
         totalCost: totals.totalCost,
         totalSale: totals.totalSale,
         profit: totals.profit
@@ -252,6 +267,8 @@ export default function Orders() {
       const totals = calculateItemTotals(item);
       return {
         ...item,
+        area: totals.area,
+        sheetCost: totals.sheetCost,
         totalCost: totals.totalCost,
         totalSale: totals.totalSale,
         profit: totals.profit
@@ -578,7 +595,8 @@ export default function Orders() {
                             updateLineItem(index, 'productName', product.name);
                             updateLineItem(index, 'length', product.length);
                             updateLineItem(index, 'width', product.width);
-                            updateLineItem(index, 'unitCost', product.unitCost * product.length * product.width * product.thickness);
+                            updateLineItem(index, 'thickness', product.thickness);
+                            updateLineItem(index, 'unitCost', product.unitCost);
                           } else {
                             updateLineItem(index, 'productId', productId);
                           }
@@ -809,7 +827,8 @@ export default function Orders() {
                             updateLineItem(index, 'productName', product.name);
                             updateLineItem(index, 'length', product.length);
                             updateLineItem(index, 'width', product.width);
-                            updateLineItem(index, 'unitCost', product.unitCost * product.length * product.width * product.thickness);
+                            updateLineItem(index, 'thickness', product.thickness);
+                            updateLineItem(index, 'unitCost', product.unitCost);
                           } else {
                             updateLineItem(index, 'productId', productId);
                           }
@@ -867,9 +886,11 @@ export default function Orders() {
                       <input
                         type="number"
                         value={item.length}
-                        readOnly
-                        className="w-full px-2 py-2 border border-gray-300 rounded-md text-sm bg-gray-100"
-                        placeholder="Auto-filled"
+                        onChange={(e) => updateLineItem(index, 'length', parseFloat(e.target.value) || 0)}
+                        className="w-full px-2 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="e.g., 1000"
+                        min="0"
+                        step="0.01"
                       />
                     </div>
                     <div>
@@ -877,9 +898,23 @@ export default function Orders() {
                       <input
                         type="number"
                         value={item.width}
-                        readOnly
-                        className="w-full px-2 py-2 border border-gray-300 rounded-md text-sm bg-gray-100"
-                        placeholder="Auto-filled"
+                        onChange={(e) => updateLineItem(index, 'width', parseFloat(e.target.value) || 0)}
+                        className="w-full px-2 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="e.g., 500"
+                        min="0"
+                        step="0.01"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-600 mb-1">Thickness (mm) *</label>
+                      <input
+                        type="number"
+                        value={item.thickness}
+                        onChange={(e) => updateLineItem(index, 'thickness', parseFloat(e.target.value) || 0)}
+                        className="w-full px-2 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="e.g., 5"
+                        min="0"
+                        step="0.01"
                       />
                     </div>
                     <div>
@@ -894,13 +929,35 @@ export default function Orders() {
                       />
                     </div>
                     <div>
-                      <label className="block text-xs font-medium text-gray-600 mb-1">Unit Cost (₹)</label>
+                      <label className="block text-xs font-medium text-gray-600 mb-1">Area (mm³)</label>
+                      <input
+                        type="number"
+                        value={calculateItemTotals(item).area.toFixed(2)}
+                        readOnly
+                        className="w-full px-2 py-2 border border-gray-300 rounded-md text-sm bg-gray-100"
+                        placeholder="Auto-calculated"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-600 mb-1">Unit Cost (₹/mm)</label>
                       <input
                         type="number"
                         value={item.unitCost}
+                        onChange={(e) => updateLineItem(index, 'unitCost', parseFloat(e.target.value) || 0)}
+                        className="w-full px-2 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="e.g., 0.001"
+                        min="0"
+                        step="0.000001"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-600 mb-1">Sheet Cost (₹)</label>
+                      <input
+                        type="number"
+                        value={calculateItemTotals(item).sheetCost.toFixed(2)}
                         readOnly
                         className="w-full px-2 py-2 border border-gray-300 rounded-md text-sm bg-gray-100"
-                        placeholder="Auto-filled"
+                        placeholder="Auto-calculated"
                       />
                     </div>
 
