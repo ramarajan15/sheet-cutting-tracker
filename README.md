@@ -233,10 +233,10 @@ Navigate to `/purchases` to manage incoming stock purchases:
 
 1. **Add New Purchase**: Click the "Add New Purchase" button
    - Required fields: Purchase ID, Factory, and Product
-   - **Product Selection**: Choose a product from the dropdown - dimensions and cost are automatically filled from the product master data
+   - **Product Selection**: Choose a product from the dropdown - dimensions and whole product price are automatically filled from the product master data
    - Optional fields: Date, Quantity, Batch Reference, and Notes
-   - Size, Thickness, and Unit Cost are auto-filled from the selected product and are read-only
-   - Total Cost is automatically calculated from Quantity × Unit Cost
+   - Size, Thickness, and Unit Cost (whole product price) are auto-filled from the selected product and are read-only
+   - Total Cost is automatically calculated from Quantity × Unit Cost (price per product)
    - Click "Add Purchase" to save
 
 2. **Edit Purchase**: Click "Edit" next to any purchase in the table
@@ -306,8 +306,10 @@ Navigate to `/products` to manage your product catalog:
      - Width (mm): e.g., 1220
      - Thickness (mm): e.g., 1.0
    - **Auto-calculated**: Area (mm²) = Length × Width
+   - **Pricing**:
+     - Price (₹): Enter the whole product price (e.g., 5000)
+     - Unit Cost (₹/mm³): Automatically calculated as price / (length × width × thickness)
    - Optional fields:
-     - Unit Cost (₹/mm²): Cost per 1mm × 1mm
      - Colour: e.g., "Oak Brown"
      - Weight (grams): e.g., 15000
      - Notes: Additional product information
@@ -315,7 +317,7 @@ Navigate to `/products` to manage your product catalog:
 
 2. **Edit Product**: Click "Edit" next to any product in the table
    - Modify any fields (ID is locked)
-   - Area updates automatically when dimensions change
+   - Area and Unit Cost update automatically when dimensions or price change
    - Click "Save Changes" to update
 
 3. **Delete Product**: Click "Delete" next to any product

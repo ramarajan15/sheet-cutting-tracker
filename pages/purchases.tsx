@@ -424,7 +424,7 @@ export default function Purchases() {
                       productId,
                       size: `${product.length}x${product.width}`,
                       thickness: `${product.thickness}mm`,
-                      unitCost: product.unitCost * product.area // Convert from per-mm² to per-sheet
+                      unitCost: product.price // Use whole product price
                     });
                   } else {
                     setFormData({ ...formData, productId });
@@ -579,7 +579,7 @@ export default function Purchases() {
                       productId,
                       size: `${product.length}x${product.width}`,
                       thickness: `${product.thickness}mm`,
-                      unitCost: product.unitCost * product.area
+                      unitCost: product.price // Use whole product price
                     });
                   } else {
                     setFormData({ ...formData, productId });
