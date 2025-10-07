@@ -110,13 +110,33 @@ export default function Purchases() {
     return qty * unitCost;
   };
 
+  // Helper function to parse area from size string (e.g., "2440x1220" -> area in mm²)
+  const parseAreaFromSize = (size: string): number => {
+    if (!size) return 0;
+    const parts = size.split('x');
+    if (parts.length === 2) {
+      const length = parseFloat(parts[0]);
+      const width = parseFloat(parts[1]);
+      if (!isNaN(length) && !isNaN(width)) {
+        return length * width;
+      }
+    }
+    return 0;
+  };
+
+  // Calculate unit cost from total cost and area
+  const calculateUnitCostFromTotal = (totalCost: number, qty: number, size: string): number => {
+    const area = parseAreaFromSize(size);
+    if (area === 0 || qty === 0) return 0;
+    return totalCost / (qty * area);
+  };
+
   const handleSaveAdd = () => {
     if (!formData.id || !formData.factoryId || !formData.productId) {
       alert('Please fill in required fields (ID, Factory, Product)');
       return;
     }
 
-    const totalCost = calculateTotalCost(formData.qty || 0, formData.unitCost || 0);
     const factoryName = getFactoryName(formData.factoryId || '');
     const productName = getProductName(formData.productId || '');
 
@@ -130,8 +150,8 @@ export default function Purchases() {
       size: formData.size || '',
       thickness: formData.thickness || '',
       qty: formData.qty || 0,
-      unitCost: formData.unitCost || 0,
-      totalCost,
+      unitCost: parseFloat((formData.unitCost || 0).toFixed(2)),
+      totalCost: parseFloat((formData.totalCost || 0).toFixed(2)),
       batchRef: formData.batchRef || '',
       notes: formData.notes || ''
     };
@@ -146,12 +166,17 @@ export default function Purchases() {
       return;
     }
 
-    const totalCost = calculateTotalCost(formData.qty || 0, formData.unitCost || 0);
     const factoryName = getFactoryName(formData.factoryId || '');
     const productName = getProductName(formData.productId || '');
 
     const updatedPurchases = purchases.map(p =>
-      p.id === currentPurchase?.id ? { ...formData as Purchase, totalCost, factoryName, productName } : p
+      p.id === currentPurchase?.id ? { 
+        ...formData as Purchase, 
+        unitCost: parseFloat((formData.unitCost || 0).toFixed(2)),
+        totalCost: parseFloat((formData.totalCost || 0).toFixed(2)),
+        factoryName, 
+        productName 
+      } : p
     );
 
     setPurchases(updatedPurchases);
@@ -418,13 +443,14 @@ export default function Purchases() {
                   const productId = e.target.value;
                   const product = getProduct(productId);
                   if (product) {
-                    // Auto-fill dimensions and price from product
+                    // Auto-fill dimensions from product
                     setFormData({ 
                       ...formData, 
                       productId,
                       size: `${product.length}x${product.width}`,
                       thickness: `${product.thickness}mm`,
-                      unitCost: product.price || (product.unitCost * product.length * product.width * product.thickness) // Use whole product price if available, fallback to calculated
+                      totalCost: 0,
+                      unitCost: 0
                     });
                   } else {
                     setFormData({ ...formData, productId });
@@ -465,7 +491,11 @@ export default function Purchases() {
               <input
                 type="number"
                 value={formData.qty}
-                onChange={(e) => setFormData({ ...formData, qty: parseFloat(e.target.value) || 0 })}
+                onChange={(e) => {
+                  const qty = parseFloat(e.target.value) || 0;
+                  const unitCost = calculateUnitCostFromTotal(formData.totalCost || 0, qty, formData.size || '');
+                  setFormData({ ...formData, qty, unitCost });
+                }}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 min="0"
               />
@@ -473,20 +503,32 @@ export default function Purchases() {
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Unit Cost (₹)</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Total Cost (₹)
+                <span className="text-xs text-gray-500 font-normal ml-2">(Editable)</span>
+              </label>
               <input
                 type="number"
-                value={formData.unitCost}
-                readOnly
-                className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-100"
-                placeholder="Auto-filled from product"
+                value={formData.totalCost || ''}
+                onChange={(e) => {
+                  const totalCost = parseFloat(e.target.value) || 0;
+                  const unitCost = calculateUnitCostFromTotal(totalCost, formData.qty || 0, formData.size || '');
+                  setFormData({ ...formData, totalCost, unitCost });
+                }}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="e.g., 5000.00"
+                min="0"
+                step="0.01"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Total Cost (Auto-calculated)</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Unit Cost (₹/mm²)
+                <span className="text-xs text-gray-500 font-normal ml-2">(Auto-calculated)</span>
+              </label>
               <input
                 type="number"
-                value={calculateTotalCost(formData.qty || 0, formData.unitCost || 0)}
+                value={formData.unitCost?.toFixed(2) || '0.00'}
                 readOnly
                 className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-100"
               />
@@ -573,13 +615,16 @@ export default function Purchases() {
                   const productId = e.target.value;
                   const product = getProduct(productId);
                   if (product) {
-                    // Auto-fill dimensions and price from product
+                    // Auto-fill dimensions from product, recalculate unit cost based on existing total cost
+                    const totalCost = formData.totalCost || 0;
+                    const size = `${product.length}x${product.width}`;
+                    const unitCost = calculateUnitCostFromTotal(totalCost, formData.qty || 0, size);
                     setFormData({ 
                       ...formData, 
                       productId,
-                      size: `${product.length}x${product.width}`,
+                      size,
                       thickness: `${product.thickness}mm`,
-                      unitCost: product.price || (product.unitCost * product.length * product.width * product.thickness) // Use whole product price if available, fallback to calculated
+                      unitCost
                     });
                   } else {
                     setFormData({ ...formData, productId });
@@ -620,7 +665,11 @@ export default function Purchases() {
               <input
                 type="number"
                 value={formData.qty}
-                onChange={(e) => setFormData({ ...formData, qty: parseFloat(e.target.value) || 0 })}
+                onChange={(e) => {
+                  const qty = parseFloat(e.target.value) || 0;
+                  const unitCost = calculateUnitCostFromTotal(formData.totalCost || 0, qty, formData.size || '');
+                  setFormData({ ...formData, qty, unitCost });
+                }}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 min="0"
               />
@@ -628,20 +677,32 @@ export default function Purchases() {
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Unit Cost (₹)</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Total Cost (₹)
+                <span className="text-xs text-gray-500 font-normal ml-2">(Editable)</span>
+              </label>
               <input
                 type="number"
-                value={formData.unitCost}
-                readOnly
-                className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-100"
-                placeholder="Auto-filled from product"
+                value={formData.totalCost || ''}
+                onChange={(e) => {
+                  const totalCost = parseFloat(e.target.value) || 0;
+                  const unitCost = calculateUnitCostFromTotal(totalCost, formData.qty || 0, formData.size || '');
+                  setFormData({ ...formData, totalCost, unitCost });
+                }}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="e.g., 5000.00"
+                min="0"
+                step="0.01"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Total Cost (₹) (Auto-calculated)</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Unit Cost (₹/mm²)
+                <span className="text-xs text-gray-500 font-normal ml-2">(Auto-calculated)</span>
+              </label>
               <input
                 type="number"
-                value={calculateTotalCost(formData.qty || 0, formData.unitCost || 0)}
+                value={formData.unitCost?.toFixed(2) || '0.00'}
                 readOnly
                 className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-100"
               />
