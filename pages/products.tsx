@@ -26,6 +26,7 @@ export default function Products() {
     width: 0,
     thickness: 0,
     area: 0,
+    price: 0,
     unitCost: 0,
     colour: '',
     weight: 0,
@@ -56,6 +57,15 @@ export default function Products() {
       setFormData(prev => ({ ...prev, area }));
     }
   }, [formData.length, formData.width]);
+
+  // Auto-calculate unit cost when price or dimensions change
+  useEffect(() => {
+    if (formData.price && formData.length && formData.width && formData.thickness) {
+      const volume = formData.length * formData.width * formData.thickness;
+      const unitCost = formData.price / volume;
+      setFormData(prev => ({ ...prev, unitCost }));
+    }
+  }, [formData.price, formData.length, formData.width, formData.thickness]);
 
   const getCategoryName = (categoryId: string) => {
     const category = categories.find(c => c.id === categoryId);
@@ -106,6 +116,7 @@ export default function Products() {
       width: 0,
       thickness: 0,
       area: 0,
+      price: 0,
       unitCost: 0,
       colour: '',
       weight: 0,
@@ -146,6 +157,7 @@ export default function Products() {
       width: Number(formData.width),
       thickness: Number(formData.thickness),
       area: Number(formData.area),
+      price: Number(formData.price || 0),
       unitCost: Number(formData.unitCost || 0),
       colour: formData.colour || '',
       weight: Number(formData.weight || 0),
@@ -177,6 +189,7 @@ export default function Products() {
       width: Number(formData.width),
       thickness: Number(formData.thickness),
       area: Number(formData.area),
+      price: Number(formData.price || 0),
       unitCost: Number(formData.unitCost || 0),
       colour: formData.colour || '',
       weight: Number(formData.weight || 0),
@@ -326,9 +339,15 @@ export default function Products() {
                 </th>
                 <th 
                   className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                  onClick={() => handleSort('price')}
+                >
+                  Price (₹) {sortField === 'price' && (sortDirection === 'asc' ? '↑' : '↓')}
+                </th>
+                <th 
+                  className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
                   onClick={() => handleSort('unitCost')}
                 >
-                  Unit Cost (₹/mm²) {sortField === 'unitCost' && (sortDirection === 'asc' ? '↑' : '↓')}
+                  Unit Cost (₹/mm³) {sortField === 'unitCost' && (sortDirection === 'asc' ? '↑' : '↓')}
                 </th>
                 <th 
                   className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
@@ -366,7 +385,10 @@ export default function Products() {
                     {product.area.toLocaleString()}
                   </td>
                   <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
-                    ₹{product.unitCost.toFixed(4)}
+                    ₹{(product.price || 0).toFixed(2)}
+                  </td>
+                  <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
+                    ₹{(product.unitCost || 0).toFixed(6)}
                   </td>
                   <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
                     {product.colour || '-'}
@@ -394,7 +416,7 @@ export default function Products() {
               ))}
               {filteredProducts.length === 0 && (
                 <tr>
-                  <td colSpan={9} className="px-4 py-8 text-center text-gray-500">
+                  <td colSpan={10} className="px-4 py-8 text-center text-gray-500">
                     No products found. {searchTerm && "Try adjusting your search or filters."}
                   </td>
                 </tr>
@@ -414,7 +436,7 @@ export default function Products() {
           </div>
           <div className="ml-3">
             <p className="text-sm text-blue-700">
-              Product data is loaded from the &apos;Products&apos; sheet in the Excel file. All dimensions are in millimeters (mm), area is calculated automatically in mm², and unit cost is per 1mm × 1mm in Indian Rupees (₹).
+              Product data is loaded from the &apos;Products&apos; sheet in the Excel file. All dimensions are in millimeters (mm), area is calculated automatically in mm². Price is the cost of the whole product in Indian Rupees (₹), and unit cost is automatically calculated as price / (length × width × thickness) per cubic mm.
             </p>
           </div>
         </div>
@@ -527,19 +549,34 @@ export default function Products() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Unit Cost (₹/mm²)
-                <span className="text-xs text-gray-500 font-normal ml-2">(Cost per 1mm × 1mm)</span>
+                Price (₹)
+                <span className="text-xs text-gray-500 font-normal ml-2">(Whole product price)</span>
+              </label>
+              <input
+                type="number"
+                value={formData.price || ''}
+                onChange={(e) => setFormData({ ...formData, price: Number(e.target.value) })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="e.g., 5000"
+                min="0"
+                step="0.01"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Unit Cost (₹/mm³)
+                <span className="text-xs text-gray-500 font-normal ml-2">(Auto-calculated)</span>
               </label>
               <input
                 type="number"
                 value={formData.unitCost || ''}
-                onChange={(e) => setFormData({ ...formData, unitCost: Number(e.target.value) })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="e.g., 0.0025"
-                min="0"
-                step="0.0001"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-100"
+                disabled
               />
             </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Colour</label>
               <input
@@ -550,21 +587,20 @@ export default function Products() {
                 placeholder="e.g., Oak Brown"
               />
             </div>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Weight (grams)
-            </label>
-            <input
-              type="number"
-              value={formData.weight || ''}
-              onChange={(e) => setFormData({ ...formData, weight: Number(e.target.value) })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="e.g., 15000"
-              min="0"
-              step="0.01"
-            />
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Weight (grams)
+              </label>
+              <input
+                type="number"
+                value={formData.weight || ''}
+                onChange={(e) => setFormData({ ...formData, weight: Number(e.target.value) })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="e.g., 15000"
+                min="0"
+                step="0.01"
+              />
+            </div>
           </div>
 
           <div>
@@ -694,18 +730,33 @@ export default function Products() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Unit Cost (₹/mm²)
-                <span className="text-xs text-gray-500 font-normal ml-2">(Cost per 1mm × 1mm)</span>
+                Price (₹)
+                <span className="text-xs text-gray-500 font-normal ml-2">(Whole product price)</span>
+              </label>
+              <input
+                type="number"
+                value={formData.price || ''}
+                onChange={(e) => setFormData({ ...formData, price: Number(e.target.value) })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                min="0"
+                step="0.01"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Unit Cost (₹/mm³)
+                <span className="text-xs text-gray-500 font-normal ml-2">(Auto-calculated)</span>
               </label>
               <input
                 type="number"
                 value={formData.unitCost || ''}
-                onChange={(e) => setFormData({ ...formData, unitCost: Number(e.target.value) })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                min="0"
-                step="0.0001"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-100"
+                disabled
               />
             </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Colour</label>
               <input
@@ -715,20 +766,19 @@ export default function Products() {
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Weight (grams)
-            </label>
-            <input
-              type="number"
-              value={formData.weight || ''}
-              onChange={(e) => setFormData({ ...formData, weight: Number(e.target.value) })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              min="0"
-              step="0.01"
-            />
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Weight (grams)
+              </label>
+              <input
+                type="number"
+                value={formData.weight || ''}
+                onChange={(e) => setFormData({ ...formData, weight: Number(e.target.value) })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                min="0"
+                step="0.01"
+              />
+            </div>
           </div>
 
           <div>

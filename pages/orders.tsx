@@ -578,7 +578,7 @@ export default function Orders() {
                             updateLineItem(index, 'productName', product.name);
                             updateLineItem(index, 'length', product.length);
                             updateLineItem(index, 'width', product.width);
-                            updateLineItem(index, 'unitCost', product.unitCost * product.area);
+                            updateLineItem(index, 'unitCost', product.unitCost * product.length * product.width * product.thickness);
                           } else {
                             updateLineItem(index, 'productId', productId);
                           }
@@ -809,7 +809,7 @@ export default function Orders() {
                             updateLineItem(index, 'productName', product.name);
                             updateLineItem(index, 'length', product.length);
                             updateLineItem(index, 'width', product.width);
-                            updateLineItem(index, 'unitCost', product.unitCost * product.area);
+                            updateLineItem(index, 'unitCost', product.unitCost * product.length * product.width * product.thickness);
                           } else {
                             updateLineItem(index, 'productId', productId);
                           }
