@@ -424,7 +424,7 @@ export default function Purchases() {
                       productId,
                       size: `${product.length}x${product.width}`,
                       thickness: `${product.thickness}mm`,
-                      unitCost: product.price // Use whole product price
+                      unitCost: product.price || (product.unitCost * product.length * product.width * product.thickness) // Use whole product price if available, fallback to calculated
                     });
                   } else {
                     setFormData({ ...formData, productId });
@@ -579,7 +579,7 @@ export default function Purchases() {
                       productId,
                       size: `${product.length}x${product.width}`,
                       thickness: `${product.thickness}mm`,
-                      unitCost: product.price // Use whole product price
+                      unitCost: product.price || (product.unitCost * product.length * product.width * product.thickness) // Use whole product price if available, fallback to calculated
                     });
                   } else {
                     setFormData({ ...formData, productId });

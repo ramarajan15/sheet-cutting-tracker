@@ -37,7 +37,7 @@ export interface Product {
   width: number; // Width in millimeters (mm)
   thickness: number; // Thickness in millimeters (mm)
   area: number; // Area in square millimeters (mm²)
-  price: number; // Price of the whole product in Indian Rupees (₹)
+  price?: number; // Price of the whole product in Indian Rupees (₹) - optional for backward compatibility
   unitCost: number; // Auto-calculated: price / (length × width × thickness) - Cost per cubic mm in Indian Rupees (₹)
   colour?: string;
   weight?: number; // Weight in grams
